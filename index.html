@@ -26,6 +26,7 @@
   --red: #ff3b30;
   --blue: #007aff;
   --bar: rgba(249, 249, 249, 0.86);
+  --seg-on: #ffffff;
   --tab-h: 50px;
   --radius: 14px;
   --side: 16px;
@@ -44,6 +45,7 @@
     --red: #ff453a;
     --blue: #0a84ff;
     --bar: rgba(22, 22, 23, 0.86);
+    --seg-on: #636366;
   }
 }
 
@@ -267,7 +269,7 @@ body.sheet-open { overflow: hidden; }
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--fill); border-radius: 9px; padding: 2px; margin-bottom: 8px; }
 .seg label { position: relative; text-align: center; font-size: 13px; font-weight: 500; padding: 7px 4px; border-radius: 7px; cursor: pointer; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
-.seg label:has(input:checked) { background: var(--card); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
+.seg label:has(input:checked) { background: var(--seg-on); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
 .seg label:has(input:focus-visible) { outline: 2px solid var(--accent); }
 .form-error { color: var(--red); font-size: 13px; margin: 0 16px 12px; min-height: 0; }
 .form-error:empty { display: none; }
@@ -305,6 +307,51 @@ body.sheet-open { overflow: hidden; }
   .ring-center b { font-size: 24px; }
   .stat b { font-size: 17px; }
 }
+
+/* ===== Сценарии ===== */
+.seg label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0; }
+.chip {
+  min-height: 44px; border-radius: 12px;
+  background: var(--card); color: var(--label);
+  font-size: 16px; font-weight: 600;
+  border: 1.5px solid transparent;
+}
+.chip.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.chip:active { opacity: 0.7; }
+.sc-hero { text-align: center; padding: 20px 16px; margin-top: 16px; }
+.sc-hero .label { font-size: 15px; color: var(--label-2); }
+.sc-hero .big { font-size: 32px; color: var(--accent); margin: 4px 0 6px; }
+.sc-hero .sub { font-size: 15px; color: var(--label-2); }
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+.cmp-col {
+  text-align: left; background: var(--card); border-radius: var(--radius);
+  padding: 14px 12px; border: 2px solid transparent;
+}
+.cmp-col.selected { border-color: var(--accent); }
+.cmp-col h3 { font-size: 15px; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; gap: 4px; }
+.cmp-col h3 .check { color: var(--accent); }
+.cmp-item { margin-bottom: 10px; }
+.cmp-item:last-child { margin-bottom: 0; }
+.cmp-item b { display: block; font-size: 17px; font-weight: 600; letter-spacing: -0.2px; }
+.cmp-item b.good { color: var(--accent); }
+.cmp-item span { font-size: 12px; color: var(--label-2); }
+.chart-card { padding: 16px 12px 12px; }
+.chart { display: block; width: 100%; height: auto; overflow: visible; }
+.chart .grid { stroke: var(--separator); stroke-width: 1; }
+.chart .axis { fill: var(--label-2); font-size: 10px; }
+.chart .base { stroke: var(--label-3); }
+.chart .main { stroke: var(--accent); }
+.chart .double { stroke: var(--accent); opacity: 0.45; stroke-dasharray: 4 3; }
+.chart .area { fill: var(--accent-soft); stroke: none; }
+.chart polyline { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.legend { display: grid; gap: 6px; margin-top: 10px; font-size: 13px; }
+.legend div { display: flex; align-items: center; gap: 8px; }
+.legend i { width: 16px; height: 3px; border-radius: 2px; flex: none; }
+.legend span { color: var(--label-2); margin-left: auto; white-space: nowrap; }
+.journal-row { display: block; }
+.journal-row .top { display: flex; justify-content: space-between; gap: 8px; }
+.journal-row .caption { margin-top: 2px; }
 
 /* ===== Тесты ===== */
 .test-row { font-size: 15px; align-items: flex-start; }
@@ -349,10 +396,24 @@ body.sheet-open { overflow: hidden; }
   <!-- Сценарии -->
   <section class="screen" id="screen-scenarios" aria-labelledby="t-scenarios">
     <h1 class="large-title" id="t-scenarios">Сценарии</h1>
-    <div class="card empty">
+    <div class="card empty" id="sc-empty">
       <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M4 16l5-5 4 3 7-8"/></svg></div>
       <h2>Что если?</h2>
-      <p>Здесь можно будет посмотреть, что даст +5, +10 или +20 тысяч к платежу каждый месяц.</p>
+      <p>Добавьте кредит — и здесь можно будет посмотреть, что даст +5, +10 или +20 тысяч к платежу каждый месяц.</p>
+      <button class="btn-primary" data-add-loan>Добавить кредит</button>
+    </div>
+    <div id="sc-main" hidden>
+      <div class="seg" id="sc-loan-seg" role="radiogroup" aria-label="Кредит"></div>
+      <div class="seg" id="sc-kind-seg" role="radiogroup" aria-label="Как вносить">
+        <label><input type="radio" name="sc-kind" value="monthly" checked>Каждый месяц</label>
+        <label><input type="radio" name="sc-kind" value="lump">Разово</label>
+      </div>
+      <div class="chips" id="sc-chips"></div>
+      <div class="group">
+        <div class="row field"><label for="sc-amount" id="sc-amount-label">Своя сумма</label><input id="sc-amount" inputmode="decimal" placeholder="0 ₽" autocomplete="off"></div>
+      </div>
+      <div id="sc-result"></div>
+      <div id="sc-journal"></div>
     </div>
   </section>
 
@@ -537,6 +598,8 @@ function fmtMonthYear(d) {
 }
 const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
 function fmtDayMonth(d) { return d.getDate() + ' ' + MONTHS_GEN[d.getMonth()] }
+/** «октября 2043» — для «вместо …». */
+function fmtMonthYearGen(d) { return MONTHS_GEN[d.getMonth()] + ' ' + d.getFullYear() }
 
 /** Процент выплаченного вниз до целого: 99,6% — ещё не 100%. */
 function pct(progress) { return Math.floor(progress * 100) }
@@ -659,6 +722,41 @@ function loanState(loan, asOf) {
     infinite: rest.infinite,
     nextPayment: balance > 0 ? nthPaymentDate(asOf, loan.payDay, 1) : null,
     payoffDate: rest.infinite || balance <= 0 ? null : nthPaymentDate(asOf, loan.payDay, rest.months),
+  }
+}
+
+/**
+ * Сравнение трёх вариантов от текущего остатка: без досрочки, «уменьшить срок», «уменьшить платёж».
+ * opts: { extraMonthly } — прибавка к каждому платежу, или { lumpSum } — разовая досрочка сейчас.
+ */
+function compareScenario(balance, loan, asOf, opts) {
+  const base = simulate({ balance, rate: loan.rate, payment: loan.payment })
+  const side = (r) => ({
+    months: r.months,
+    monthsSaved: base.months - r.months,
+    interest: r.totalInterest,
+    interestSaved: base.totalInterest - r.totalInterest,
+    payment: r.firstPayment,
+    payoffDate: r.infinite || r.months === 0 ? null : nthPaymentDate(asOf, loan.payDay, r.months),
+    balances: r.balances,
+  })
+  return {
+    base: side(base),
+    term: side(simulate({ balance, rate: loan.rate, payment: loan.payment, mode: 'term', ...opts })),
+    payment: side(simulate({ balance, rate: loan.rate, payment: loan.payment, mode: 'payment', ...opts })),
+  }
+}
+
+/** Разовое досрочное погашение: новые поля кредита и оценка эффекта для журнала. */
+function applyPrepayment(loan, amount, mode, date) {
+  const s = loanState(loan, date)
+  const paid = Math.min(amount, s.balance)
+  const effect = compareScenario(s.balance, loan, date, { lumpSum: paid })[mode]
+  const balance = s.balance - paid
+  const payment = mode === 'payment' && balance > 0 ? annuityPayment(balance, loan.rate, s.monthsLeft) : loan.payment
+  return {
+    loan: { ...loan, balance, payment, balanceDate: date },
+    entry: { loanId: loan.id, date, amount: paid, mode, interestSaved: effect.interestSaved, monthsSaved: effect.monthsSaved },
   }
 }
 
@@ -1047,6 +1145,196 @@ function renderHome() {
   }))
 }
 
+/* ===== Сценарии ===== */
+const SC_PRESETS = { monthly: [5000, 10000, 20000], lump: [50000, 100000, 300000] }
+const MODE_LABEL = { term: 'Уменьшить срок', payment: 'Уменьшить платёж' }
+const sc = { loanId: null, kind: 'monthly', amount: { monthly: kop(10000), lump: kop(100000) }, mode: 'term' }
+
+function fmtShortRub(k) {
+  const r = Math.round(k / 100)
+  return r % 1000 === 0 ? rubFmt.format(r / 1000) + ' тыс.' : rubFmt.format(r) + ' ₽'
+}
+
+function renderScenarios() {
+  const loans = sortedLoans()
+  document.getElementById('sc-empty').hidden = loans.length > 0
+  document.getElementById('sc-main').hidden = loans.length === 0
+  if (!loans.length) return
+  if (!loans.some((l) => l.id === sc.loanId)) sc.loanId = loans[0].id
+
+  const loanSeg = document.getElementById('sc-loan-seg')
+  loanSeg.hidden = loans.length < 2
+  loanSeg.innerHTML = loans.map((l) =>
+    '<label><input type="radio" name="sc-loan" value="' + l.id + '"' + (l.id === sc.loanId ? ' checked' : '') + '>'
+    + escapeHTML(l.name) + '</label>').join('')
+  document.querySelector('input[name="sc-kind"][value="' + sc.kind + '"]').checked = true
+
+  const amount = sc.amount[sc.kind]
+  document.getElementById('sc-chips').innerHTML = SC_PRESETS[sc.kind].map((r) =>
+    '<button class="chip' + (kop(r) === amount ? ' active' : '') + '" data-sc-amount="' + kop(r) + '">'
+    + (sc.kind === 'monthly' ? '+' : '') + fmtShortRub(kop(r)) + '</button>').join('')
+  document.getElementById('sc-amount-label').textContent = sc.kind === 'monthly' ? 'Своя сумма в месяц' : 'Своя сумма'
+  const input = document.getElementById('sc-amount')
+  if (document.activeElement !== input) input.value = amount ? rubFmt.format(amount / 100) : ''
+
+  renderScenarioResult()
+  renderJournal()
+}
+
+function renderScenarioResult() {
+  const box = document.getElementById('sc-result')
+  const loan = state.loans.find((l) => l.id === sc.loanId)
+  const today = todayISO()
+  const s = loanState(loan, today)
+  const amount = sc.amount[sc.kind]
+
+  if (s.balance <= 0) { box.innerHTML = '<div class="card sc-hero"><div class="big">Кредит закрыт</div><div class="sub">Досрочно гасить больше нечего.</div></div>'; return }
+  if (s.infinite) { box.innerHTML = '<div class="card"><p class="warn">Платёж не покрывает проценты — сначала проверьте ставку и платёж в разделе «Кредиты».</p></div>'; return }
+  if (!amount) { box.innerHTML = '<p class="footnote" style="margin-top:12px">Выберите сумму, чтобы увидеть, что изменится.</p>'; return }
+
+  const opts = sc.kind === 'monthly' ? { extraMonthly: amount } : { lumpSum: amount }
+  const c = compareScenario(s.balance, loan, today, opts)
+  const chosen = c[sc.mode]
+  const fullPayoff = sc.kind === 'lump' && amount >= s.balance
+
+  // Крупный итог по выбранному режиму
+  let hero
+  if (fullPayoff) {
+    hero = '<div class="label">Этой суммы хватит, чтобы</div><div class="big">закрыть кредит</div>'
+      + '<div class="sub">Нужно ' + fmtRubExact(s.balance) + ' · экономия на процентах ' + fmtRub(c.base.interest) + '</div>'
+  } else if (sc.mode === 'term') {
+    hero = '<div class="label">Закроете раньше на</div><div class="big">' + fmtTerm(chosen.monthsSaved) + '</div>'
+      + '<div class="sub">' + fmtMonthYear(chosen.payoffDate) + ' вместо ' + fmtMonthYearGen(c.base.payoffDate)
+      + ' · экономия ' + fmtRub(chosen.interestSaved) + '</div>'
+  } else {
+    hero = '<div class="label">Платёж станет</div><div class="big">' + fmtRubExact(chosen.payment) + '</div>'
+      + '<div class="sub">вместо ' + fmtRubExact(loan.payment) + ' · экономия ' + fmtRub(chosen.interestSaved) + '</div>'
+  }
+
+  const monthly = sc.kind === 'monthly'
+  const col = (mode) => {
+    const r = c[mode]
+    const pay = mode === 'term' ? loan.payment : r.payment
+    const shorter = r.monthsSaved > 0 ? '−' + fmtTerm(r.monthsSaved) : 'не меняется'
+    return '<button class="cmp-col' + (sc.mode === mode ? ' selected' : '') + '" data-sc-mode="' + mode + '" aria-pressed="' + (sc.mode === mode) + '">'
+      + '<h3>' + MODE_LABEL[mode] + (sc.mode === mode ? '<span class="check">✓</span>' : '') + '</h3>'
+      + '<div class="cmp-item"><b>' + (r.payoffDate ? fmtMonthYear(r.payoffDate) : 'Сразу') + '</b><span>закрытие</span></div>'
+      + '<div class="cmp-item"><b>' + shorter + '</b><span>срок</span></div>'
+      + '<div class="cmp-item"><b>' + fmtRubExact(pay) + '</b><span>платёж' + (monthly && mode === 'payment' ? ' в 1-й месяц, дальше ниже' : '') + '</span></div>'
+      + '<div class="cmp-item"><b class="good">' + fmtRub(r.interestSaved) + '</b><span>экономия на процентах</span></div>'
+      + '<div class="cmp-item"><b>' + fmtRubExact(pay + (monthly ? amount : 0)) + '</b><span>отдаёте в месяц' + (monthly ? ' с досрочкой' : '') + '</span></div>'
+      + '</button>'
+  }
+
+  // Три будущих: без досрочки, выбранная сумма и вдвое больше
+  const double = compareScenario(s.balance, loan, today, monthly ? { extraMonthly: amount * 2 } : { lumpSum: Math.min(amount * 2, s.balance) })[sc.mode]
+  const label = (k) => (monthly ? '+' + fmtShortRub(k) + ' в месяц' : 'Разово ' + fmtShortRub(k))
+  const futures = [
+    { cls: 'base', name: 'Без досрочки', r: c.base },
+    { cls: 'main', name: label(amount), r: chosen },
+    { cls: 'double', name: label(monthly ? amount * 2 : Math.min(amount * 2, s.balance)), r: double },
+  ]
+
+  box.innerHTML = '<div class="card sc-hero">' + hero + '</div>'
+    + '<p class="card-title">Как банк пересчитает — выберите</p>'
+    + '<div class="cmp">' + col('term') + col('payment') + '</div>'
+    + '<p class="card-title">Остаток долга</p>'
+    + '<div class="card chart-card">' + balanceChart(futures, today) + '<div class="legend">'
+    + futures.map((f) => '<div><i style="background:' + (f.cls === 'base' ? 'var(--label-3)' : 'var(--accent)') + (f.cls === 'double' ? ';opacity:.45' : '') + '"></i>'
+      + f.name + '<span>' + (f.r.payoffDate ? fmtMonthYear(f.r.payoffDate) : 'сразу') + '</span></div>').join('')
+    + '</div></div>'
+    + (monthly
+      ? '<p class="footnote">Это прогноз. Когда внесёте досрочку в банке, запишите её во вкладке «Разово» — остаток и даты обновятся.</p>'
+      : '<button class="btn-primary" id="sc-record">Записать досрочку ' + fmtRub(Math.min(amount, s.balance)) + '</button>'
+        + '<p class="footnote" style="margin-top:8px">Запишите, когда деньги уже внесены в банк. Режим — «' + MODE_LABEL[sc.mode].toLowerCase() + '».</p>')
+}
+
+/** SVG-график остатка долга: линия для каждого будущего, заливка под выбранным. */
+function balanceChart(futures, today) {
+  const W = 300, H = 150, top = 8, bottom = 20
+  const maxM = Math.max(...futures.map((f) => f.r.balances.length - 1), 1)
+  const maxB = futures[0].r.balances[0] || 1
+  const x = (m) => (m / maxM) * W
+  const y = (b) => top + (1 - b / maxB) * (H - top - bottom)
+  const pts = (arr) => {
+    const step = Math.max(1, Math.ceil(arr.length / 150))
+    const out = []
+    for (let m = 0; m < arr.length; m += step) out.push(x(m).toFixed(1) + ',' + y(arr[m]).toFixed(1))
+    const last = arr.length - 1
+    if (last % step) out.push(x(last).toFixed(1) + ',' + y(arr[last]).toFixed(1))
+    return out.join(' ')
+  }
+  const main = futures[1].r.balances
+  const area = pts(main) + ' ' + x(main.length - 1).toFixed(1) + ',' + y(0) + ' 0,' + y(0)
+  const startYear = fromISO(today).getFullYear()
+  const years = maxM / 12
+  const tickEvery = years > 20 ? 10 : years > 8 ? 5 : years > 3 ? 2 : 1
+  let ticks = ''
+  for (let yr = Math.ceil(startYear / tickEvery) * tickEvery; (yr - startYear) * 12 <= maxM; yr += tickEvery) {
+    const m = (yr - startYear) * 12 - fromISO(today).getMonth()
+    if (m < 0 || m > maxM) continue
+    ticks += '<line class="grid" x1="' + x(m) + '" x2="' + x(m) + '" y1="' + top + '" y2="' + y(0) + '"/>'
+      + '<text class="axis" x="' + x(m) + '" y="' + (H - 4) + '" text-anchor="middle">' + yr + '</text>'
+  }
+  return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="График остатка долга">'
+    + '<line class="grid" x1="0" x2="' + W + '" y1="' + y(0) + '" y2="' + y(0) + '"/>' + ticks
+    + '<polygon class="area" points="' + area + '"/>'
+    + futures.map((f) => '<polyline class="' + f.cls + '" points="' + pts(f.r.balances) + '"/>').join('')
+    + '</svg>'
+}
+
+function renderJournal() {
+  const box = document.getElementById('sc-journal')
+  const entries = state.prepayments.filter((p) => p.loanId === sc.loanId).sort((a, b) => b.date.localeCompare(a.date))
+  if (!entries.length) { box.innerHTML = ''; return }
+  const total = entries.reduce((a, p) => a + p.amount, 0)
+  const saved = entries.reduce((a, p) => a + p.interestSaved, 0)
+  box.innerHTML = '<p class="card-title">Внесённые досрочки</p><div class="group">'
+    + entries.map((p) => '<div class="row journal-row"><div class="top"><span>' + fmtDayMonth(fromISO(p.date)) + ' ' + p.date.slice(0, 4)
+      + '</span><b>' + fmtRub(p.amount) + '</b></div><div class="caption">' + MODE_LABEL[p.mode]
+      + ' · экономия ≈ ' + fmtRub(p.interestSaved) + (p.monthsSaved > 0 ? ' · −' + fmtTerm(p.monthsSaved) : '') + '</div></div>').join('')
+    + '</div><p class="footnote">Всего внесено ' + fmtRub(total) + ', сэкономлено ≈ ' + fmtRub(saved)
+    + '. Ошиблись в записи — поправьте остаток в карточке кредита.</p>'
+}
+
+document.getElementById('screen-scenarios').addEventListener('change', (e) => {
+  if (e.target.name === 'sc-loan') sc.loanId = e.target.value
+  if (e.target.name === 'sc-kind') sc.kind = e.target.value
+  renderScenarios()
+})
+document.getElementById('screen-scenarios').addEventListener('click', (e) => {
+  const chip = e.target.closest('[data-sc-amount]')
+  if (chip) { sc.amount[sc.kind] = Number(chip.dataset.scAmount); renderScenarios(); return }
+  const col = e.target.closest('[data-sc-mode]')
+  if (col) { sc.mode = col.dataset.scMode; renderScenarioResult(); return }
+  if (e.target.closest('#sc-record')) recordPrepayment()
+})
+document.getElementById('sc-amount').addEventListener('input', (e) => {
+  const v = e.target.value.trim() ? parseMoney(e.target.value) : 0
+  if (v === null) return
+  sc.amount[sc.kind] = v
+  for (const chip of document.querySelectorAll('#sc-chips .chip')) chip.classList.toggle('active', Number(chip.dataset.scAmount) === v)
+  renderScenarioResult()
+})
+document.getElementById('sc-amount').addEventListener('blur', () => renderScenarios())
+
+function recordPrepayment() {
+  const loan = state.loans.find((l) => l.id === sc.loanId)
+  const amount = sc.amount.lump
+  const today = todayISO()
+  const { loan: updated, entry } = applyPrepayment(loan, amount, sc.mode, today)
+  if (!confirm('Записать досрочное погашение?\n\n' + loan.name + ': ' + fmtRubExact(entry.amount)
+    + '\nРежим: ' + MODE_LABEL[sc.mode].toLowerCase() + '\nДата: сегодня')) return
+  state.loans = state.loans.map((l) => (l.id === loan.id ? updated : l))
+  state.prepayments.push({ id: uid(), ...entry })
+  save()
+  renderAll()
+  const after = loanState(updated, today)
+  toast(after.balance <= 0 ? 'Кредит закрыт!' : sc.mode === 'term'
+    ? 'Записано. Закрытие: ' + fmtMonthYear(after.payoffDate)
+    : 'Записано. Новый платёж: ' + fmtRubExact(updated.payment))
+}
+
 /* --- Форма кредита --- */
 const loanForm = document.getElementById('sheet-loan')
 let editingLoanId = null
@@ -1222,6 +1510,53 @@ test('Дата закрытия: 70 мес от 01.01.2026, день 15 → ок
   const loan = { originalAmount: kop(1000000), balance: kop(1000000), balanceDate: '2026-01-01', rate: 12, payment: kop(20000), payDay: 15 }
   eq(toISO(loanState(loan, '2026-01-01').payoffDate), '2031-10-15')
 })
+// --- Сценарии досрочного погашения ---
+const T_LOAN = { rate: 12, payment: kop(20000), payDay: 15 }
+test('Сценарий: прибавка 0 — оба режима совпадают с базой', () => {
+  const c = compareScenario(kop(1000000), T_LOAN, '2026-01-01', { extraMonthly: 0 })
+  eq(c.term.months, c.base.months); eq(c.payment.months, c.base.months)
+  eq(c.term.interestSaved, 0); eq(c.payment.interestSaved, 0)
+})
+test('Сценарий: больше прибавка — меньше срок и больше экономия (5 → 10 → 20 тыс.)', () => {
+  const r = [5000, 10000, 20000].map((x) => compareScenario(kop(5380000), { rate: 9.5, payment: kop(53250.2), payDay: 15 }, '2026-01-01', { extraMonthly: kop(x) }).term)
+  if (!(r[0].months > r[1].months && r[1].months > r[2].months)) throw new Error('сроки: ' + r.map((x) => x.months))
+  if (!(r[0].interestSaved < r[1].interestSaved && r[1].interestSaved < r[2].interestSaved)) throw new Error('экономия не растёт')
+})
+test('Сценарий: разовая досрочка в режиме «платёж» не меняет срок', () => {
+  const a = compareScenario(kop(1000000), T_LOAN, '2026-01-01', { lumpSum: kop(100000) })
+  eq(a.payment.months, a.base.months)
+})
+test('Сценарий: ежемесячная прибавка в режиме «платёж» сокращает срок лишь в конце', () => {
+  // Платёж падает, и в последние месяцы прибавка закрывает остаток целиком.
+  const b = compareScenario(kop(1000000), T_LOAN, '2026-01-01', { extraMonthly: kop(5000) })
+  if (!(b.payment.months <= b.base.months && b.payment.months > b.term.months)) {
+    throw new Error('база ' + b.base.months + ', платёж ' + b.payment.months + ', срок ' + b.term.months)
+  }
+})
+test('Разово 100 000 ₽ из 1 000 000 ₽, «срок»: 70 → 61 мес', () => {
+  eq(compareScenario(kop(1000000), T_LOAN, '2026-01-01', { lumpSum: kop(100000) }).term.months, 61)
+})
+test('Разово 100 000 ₽, «платёж»: новый платёж = аннуитет 900 000 ₽ на 70 мес', () => {
+  eq(compareScenario(kop(1000000), T_LOAN, '2026-01-01', { lumpSum: kop(100000) }).payment.payment, annuityPayment(kop(900000), 12, 70))
+})
+test('«Срок» экономит больше процентов, чем «платёж»', () => {
+  const c = compareScenario(kop(1000000), T_LOAN, '2026-01-01', { lumpSum: kop(100000) })
+  if (!(c.term.interestSaved > c.payment.interestSaved && c.payment.interestSaved > 0)) throw new Error('срок ' + c.term.interestSaved + ', платёж ' + c.payment.interestSaved)
+})
+test('Запись досрочки: остаток и платёж пересчитаны, дата остатка — сегодня', () => {
+  const loan = { id: 'x', originalAmount: kop(1000000), balance: kop(1000000), balanceDate: '2026-01-01', ...T_LOAN }
+  const t = applyPrepayment(loan, kop(100000), 'term', '2026-01-01')
+  eq(t.loan.balance, kop(900000)); eq(t.loan.payment, kop(20000)); eq(t.entry.monthsSaved, 9)
+  const p = applyPrepayment(loan, kop(100000), 'payment', '2026-01-01')
+  eq(p.loan.payment, annuityPayment(kop(900000), 12, 70)); eq(p.loan.balanceDate, '2026-01-01')
+})
+test('Досрочка больше остатка — кредит закрывается, в журнал идёт только остаток', () => {
+  const loan = { id: 'x', originalAmount: kop(100000), balance: kop(50000), balanceDate: '2026-01-01', ...T_LOAN }
+  const t = applyPrepayment(loan, kop(80000), 'term', '2026-01-01')
+  eq(t.loan.balance, 0); eq(t.entry.amount, kop(50000))
+  eq(loanState(t.loan, '2026-01-01').payoffDate, null)
+})
+
 test('Ввод суммы: «5 380 000,50» → 538 000 050 коп.', () => eq(parseMoney('5 380 000,50'), 538000050))
 test('Ввод суммы: мусор → пусто', () => { eq(parseMoney('abc'), null); eq(parseMoney('12,345'), null); eq(parseMoney(''), null) })
 test('Срок словами: 204 мес → «17 лет», 15 мес → «1 год 3 мес»', () => { eq(fmtTerm(204), '17 лет'); eq(fmtTerm(15), '1 год 3 мес') })
@@ -1245,6 +1580,7 @@ function renderAll() {
   renderSettings()
   renderLoans()
   renderHome()
+  renderScenarios()
 }
 
 /* ===== Навигация по вкладкам =====
