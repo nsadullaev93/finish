@@ -27,9 +27,18 @@
   --blue: #007aff;
   --bar: rgba(249, 249, 249, 0.86);
   --seg-on: #ffffff;
-  --tab-h: 50px;
+  /* Стекло для навигации (Liquid Glass): только меню, контент остаётся плоским */
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-solid: #f9f9f9;
+  --glass-edge: rgba(255, 255, 255, 0.85);
+  --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --tab-pill: rgba(120, 120, 128, 0.14);
+  --tab-h: 60px;
+  --tab-gap: 10px;
   --radius: 14px;
   --side: 16px;
+  /* SF Pro Rounded для крупных чисел — как в «Фитнесе» и Wallet */
+  --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -46,6 +55,11 @@
     --blue: #0a84ff;
     --bar: rgba(22, 22, 23, 0.86);
     --seg-on: #636366;
+    --glass: rgba(44, 44, 46, 0.58);
+    --glass-solid: #1c1c1e;
+    --glass-edge: rgba(255, 255, 255, 0.16);
+    --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --tab-pill: rgba(120, 120, 128, 0.3);
   }
 }
 
@@ -69,7 +83,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   min-height: 100vh;
   min-height: 100dvh;
   padding: env(safe-area-inset-top) calc(var(--side) + env(safe-area-inset-right))
-           calc(var(--tab-h) + env(safe-area-inset-bottom) + 24px) calc(var(--side) + env(safe-area-inset-left));
+           calc(var(--tab-h) + var(--tab-gap) + env(safe-area-inset-bottom) + 28px) calc(var(--side) + env(safe-area-inset-left));
+}
+
+/* Крупные числа — скруглённым шрифтом */
+.big, .sum-big, .hero .date, .ring-center b, .stat b, .amount-box input, .answer-big,
+.meta b, .cmp-item b, .strategy .saved b, .today-card .done-big, .preview .big {
+  font-family: var(--font-rounded);
 }
 
 /* ===== Крупный заголовок, как в iOS ===== */
@@ -121,34 +141,57 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .screen.active { animation: none; } }
 
-/* ===== Нижнее меню ===== */
+/* ===== Нижнее меню: плавающая стеклянная «таблетка», как в iOS 26 =====
+   При прокрутке вниз сжимается до значков, при прокрутке вверх — возвращается. */
 .tabbar {
   position: fixed;
-  left: 0; right: 0; bottom: 0;
+  left: 50%; bottom: calc(env(safe-area-inset-bottom) + var(--tab-gap));
   z-index: 10;
-  background: var(--bar);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
-  border-top: 0.5px solid var(--separator);
-  padding-bottom: env(safe-area-inset-bottom);
+  width: min(calc(100% - 24px), 440px);
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  box-shadow: var(--glass-shadow), inset 0 0.5px 0 var(--glass-edge), inset 0 0 0 0.5px var(--glass-edge);
+  transition: width 0.35s cubic-bezier(0.3, 1.2, 0.5, 1);
 }
 .tabbar-inner {
-  max-width: 480px;
-  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   height: var(--tab-h);
+  padding: 5px;
+  transition: height 0.3s ease;
 }
 .tab {
+  position: relative;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px;
+  gap: 1px;
   min-height: 44px;
-  color: var(--label-2);
+  border-radius: 999px;
+  color: var(--label);
   font-size: 10px;
   font-weight: 500;
+  transition: color 0.2s;
 }
-.tab svg { width: 26px; height: 26px; }
-.tab[aria-selected="true"] { color: var(--accent); }
+.tab svg { width: 25px; height: 25px; transition: width 0.3s, height 0.3s; }
+/* Выбранная вкладка — капсула-подложка и акцентный цвет */
+.tab[aria-selected="true"] { color: var(--accent); background: var(--tab-pill); }
+.tab .tab-label { transition: opacity 0.2s, max-height 0.3s; max-height: 14px; overflow: hidden; }
+.tabbar.compact { width: min(calc(100% - 72px), 300px); }
+.tabbar.compact .tabbar-inner { height: 48px; }
+.tabbar.compact .tab .tab-label { opacity: 0; max-height: 0; }
+.tabbar.compact .tab svg { width: 22px; height: 22px; }
+/* Без стекла: «Понижение прозрачности» или старый браузер */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tabbar { background: var(--glass-solid); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .tabbar { background: var(--glass-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tabbar, .tabbar-inner, .tab svg, .tab .tab-label { transition: none; }
+}
 
 /* ===== Кнопка в верхней панели (над крупным заголовком) ===== */
 .nav-bar { display: flex; justify-content: flex-end; height: 44px; margin-bottom: -44px; position: relative; z-index: 1; }
@@ -219,7 +262,7 @@ body.sheet-open { overflow: hidden; }
 /* ===== Всплывающее сообщение ===== */
 .toast {
   position: fixed; left: 50%; z-index: 30;
-  bottom: calc(var(--tab-h) + env(safe-area-inset-bottom) + 16px);
+  bottom: calc(var(--tab-h) + var(--tab-gap) + env(safe-area-inset-bottom) + 14px);
   transform: translate(-50%, 20px);
   max-width: calc(100% - 32px);
   padding: 10px 18px;
@@ -247,11 +290,12 @@ body.sheet-open { overflow: hidden; }
 .warn { color: var(--red); font-size: 13px; margin-top: 10px; }
 .btn-primary {
   display: block; width: 100%; min-height: 50px;
-  border-radius: 12px;
+  border-radius: 999px;
   background: var(--accent); color: #fff;
   font-size: 17px; font-weight: 600;
 }
-.btn-primary:active { opacity: 0.8; }
+.btn-primary { transition: transform 0.15s ease, opacity 0.15s; }
+.btn-primary:active { opacity: 0.85; transform: scale(0.97); }
 .empty .btn-primary { margin-top: 18px; }
 
 /* ===== Формы ===== */
@@ -266,8 +310,8 @@ body.sheet-open { overflow: hidden; }
   padding: 0;
 }
 .field input::placeholder { color: var(--label-3); }
-.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--fill); border-radius: 9px; padding: 2px; margin-bottom: 8px; }
-.seg label { position: relative; text-align: center; font-size: 13px; font-weight: 500; padding: 7px 4px; border-radius: 7px; cursor: pointer; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--fill); border-radius: 999px; padding: 2px; margin-bottom: 8px; }
+.seg label { position: relative; text-align: center; font-size: 13px; font-weight: 500; padding: 7px 6px; border-radius: 999px; cursor: pointer; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
 .seg label:has(input:checked) { background: var(--seg-on); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
 .seg label:has(input:focus-visible) { outline: 2px solid var(--accent); }
@@ -312,7 +356,7 @@ body.sheet-open { overflow: hidden; }
 .seg label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0; }
 .chip {
-  min-height: 44px; border-radius: 12px;
+  min-height: 44px; border-radius: 999px;
   background: var(--card); color: var(--label);
   font-size: 16px; font-weight: 600;
   border: 1.5px solid transparent;
@@ -420,7 +464,6 @@ body.sheet-open { overflow: hidden; }
 .hint-hide { color: var(--label-2) !important; flex: none; }
 
 /* ===== Копилка ===== */
-.tab { font-size: 9.5px; }
 .row.intro > span:first-child { white-space: nowrap; flex: none; }
 .row.intro .value { font-size: 14px; }
 .today-card { text-align: center; padding: 22px 16px 16px; }
@@ -644,23 +687,23 @@ body.sheet-open { overflow: hidden; }
   <div class="tabbar-inner" role="tablist">
     <button class="tab" role="tab" data-tab="home" aria-controls="screen-home">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9v11h14V9"/><path d="M10 20v-6h4v6"/></svg>
-      Главная
+      <span class="tab-label">Главная</span>
     </button>
     <button class="tab" role="tab" data-tab="loans" aria-controls="screen-loans">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 21h18"/></svg>
-      Кредиты
+      <span class="tab-label">Кредиты</span>
     </button>
     <button class="tab" role="tab" data-tab="scenarios" aria-controls="screen-scenarios">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M4 16l5-5 4 3 7-8"/><path d="M16 6h4v4"/></svg>
-      Сценарии
+      <span class="tab-label">Сценарии</span>
     </button>
     <button class="tab" role="tab" data-tab="piggy" aria-controls="screen-piggy">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11c0-3.3-3.1-6-7-6-1.3 0-2.5.3-3.5.8L6 4.5v3A5.6 5.6 0 0 0 5 9.5H3v4h2.2c.6 1.2 1.6 2.2 2.8 2.9V19h3v-1.6h2V19h3v-2.6c1.8-1.1 3-3 3-5.4z"/><path d="M15.5 10h.01"/></svg>
-      Копилка
+      <span class="tab-label">Копилка</span>
     </button>
     <button class="tab" role="tab" data-tab="money" aria-controls="screen-money">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/><path d="M16 15h2"/></svg>
-      Деньги
+      <span class="tab-label">Деньги</span>
     </button>
   </div>
 </nav>
@@ -892,6 +935,40 @@ const rubFmtExact = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, m
 function fmtRub(k) { return rubFmt.format(Math.round(k / 100)) + ' ₽' }
 /** Платежи — с копейками. */
 function fmtRubExact(k) { return rubFmtExact.format(k / 100) + ' ₽' }
+function fmtSignedRub(k) { return (k < 0 ? '−' : '') + fmtRub(Math.abs(k)) }
+
+/* --- Числа «докручиваются» до нового значения, как в приложениях Apple ---
+   Элемент помечается data-count (ключ) и data-v (копейки). После перерисовки сравниваем
+   с прошлым значением по ключу и плавно меняем текст. Первое появление — без анимации. */
+const countPrev = new Map()
+let countScheduled = false
+function countAttr(key, value) {
+  if (!countScheduled) { countScheduled = true; requestAnimationFrame(runCountUps) }
+  return ' data-count="' + key + '" data-v="' + value + '"'
+}
+function runCountUps() {
+  countScheduled = false
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+  for (const el of document.querySelectorAll('[data-count]')) {
+    const key = el.dataset.count
+    const to = Number(el.dataset.v)
+    const from = countPrev.get(key)
+    countPrev.set(key, to)
+    if (from === undefined || from === to || reduce || !el.offsetParent) continue
+    const start = performance.now()
+    const dur = 500
+    const step = (now) => {
+      if (!el.isConnected) return
+      const t = Math.min(1, (now - start) / dur)
+      const e = 1 - Math.pow(1 - t, 3)
+      el.textContent = fmtSignedRub(Math.round(from + (to - from) * e))
+      if (t < 1) requestAnimationFrame(step)
+    }
+    el.textContent = fmtSignedRub(from)
+    requestAnimationFrame(step)
+  }
+}
+
 /** Для полей ввода: без пробелов-разделителей, с копейками только если они есть. */
 function moneyInput(k) { return k % 100 === 0 ? String(k / 100) : (k / 100).toFixed(2).replace('.', ',') }
 
@@ -1895,9 +1972,9 @@ function renderHome() {
     + '<circle class="value" cx="64" cy="64" r="' + RING_R + '" stroke-dasharray="' + RING_C + '" stroke-dashoffset="' + RING_C + '"/></svg>'
     + '<div class="ring-center"><b>' + p + '%</b><span>выплачено</span></div></div>'
     + '<div class="stats">'
-    + '<div class="stat paid"><b>' + fmtRub(s.paid) + '</b><span>выплачено</span></div>'
-    + '<div class="stat"><b>' + fmtRub(s.balance) + '</b><span>осталось</span></div>'
-    + '<div class="stat"><b>' + (s.infinite ? '—' : fmtRub(s.interestLeft)) + '</b><span>проценты впереди</span></div>'
+    + '<div class="stat paid"><b' + countAttr('home-paid', s.paid) + '>' + fmtRub(s.paid) + '</b><span>выплачено</span></div>'
+    + '<div class="stat"><b' + countAttr('home-left', s.balance) + '>' + fmtRub(s.balance) + '</b><span>осталось</span></div>'
+    + '<div class="stat"><b' + (s.infinite ? '' : countAttr('home-interest', s.interestLeft)) + '>' + (s.infinite ? '—' : fmtRub(s.interestLeft)) + '</b><span>проценты впереди</span></div>'
     + '</div></div>'
     + freeCard(today)
     + (hint ? '<p class="card-title">Подсказка</p>' + hintCard(hint) : '')
@@ -1929,7 +2006,7 @@ function freeCard(today) {
   const spent = monthTotals(state.transactions, state.categories, monthKey(today)).expense
   const monthName = MONTHS_PREP[fromISO(today).getMonth()]
   return '<div class="card free-card"><div class="label">Можно направить на досрочку</div>'
-    + '<div class="sum-big">до ' + fmtRub(b.free) + '</div><div class="caption">в месяц</div>'
+    + '<div class="sum-big">до <span' + countAttr('free', b.free) + '>' + fmtRub(b.free) + '</span></div><div class="caption">в месяц</div>'
     + (b.typicalExpense ? '<div class="bar"><span class="' + (spent > b.typicalExpense ? 'over' : '') + '" style="width:' + Math.min(100, Math.round(spent / b.typicalExpense * 100)) + '%"></span></div>'
       + '<p class="caption" style="margin-top:0">В ' + monthName + ' потрачено ' + fmtRub(spent) + ' из обычных ' + fmtRub(b.typicalExpense) + '</p>' : '')
     + '<p class="caption">' + lines + ' (' + basis + '). Премии не учитываются.</p>'
@@ -2447,7 +2524,7 @@ function renderMoney() {
   main.innerHTML = (hints.length ? '<p class="card-title">Подсказки</p>' + hints.map(hintCard).join('') : '')
     + '<p class="card-title">Итог месяца</p><div class="card">'
     + '<div class="caption">Осталось за месяц</div>'
-    + '<div class="sum-big' + (left < 0 ? ' neg' : '') + '">' + (left < 0 ? '−' : '') + fmtRub(Math.abs(left)) + '</div>'
+    + '<div class="sum-big' + (left < 0 ? ' neg' : '') + '"' + countAttr('money-left-' + moneyMonth, left) + '>' + fmtSignedRub(left) + '</div>'
     + '<div class="sum-lines">'
     + '<div><span>Доходы</span><b class="plus">+' + fmtRub(t.income) + '</b></div>'
     + '<div><span>Расходы</span><b>−' + fmtRub(t.expense) + '</b></div>'
@@ -2558,7 +2635,7 @@ function renderPiggy() {
   }
   const toNext = lvl.next ? lvl.next[0] - lifetime : 0
   const piggyHTML = '<p class="card-title">В копилке</p><div class="card">'
-    + '<div class="sum-big" id="piggy-sum" style="display:inline-block">' + fmtRub(inPiggy) + '</div>'
+    + '<div class="sum-big" id="piggy-sum" style="display:inline-block"' + countAttr('piggy', inPiggy) + '>' + fmtRub(inPiggy) + '</div>'
     + '<div class="caption">Уровень ' + (lvl.index + 1) + ' · «' + lvl.name + '»' + (g.deposited ? ' · уже внесено в досрочку ' + fmtRub(g.deposited) : '') + '</div>'
     + (lvl.next ? '<div class="bar"><span style="width:' + Math.round(((lifetime - PIGGY_LEVELS[lvl.index][0]) / (lvl.next[0] - PIGGY_LEVELS[lvl.index][0])) * 100) + '%"></span></div>'
       + '<div class="caption">До уровня «' + lvl.next[1] + '» — ' + fmtRub(toNext) + '</div>' : '')
@@ -3106,6 +3183,16 @@ document.querySelector('.tabbar').addEventListener('click', (e) => {
   if (location.hash.slice(1) === name) window.scrollTo({ top: 0, behavior: 'smooth' })
   else location.hash = name
 })
+
+/* Меню сжимается при прокрутке вниз и возвращается при прокрутке вверх или у верха страницы. */
+let lastScrollY = 0
+window.addEventListener('scroll', () => {
+  const y = window.scrollY
+  const bar = document.querySelector('.tabbar')
+  if (y < 40 || y < lastScrollY - 6) bar.classList.remove('compact')
+  else if (y > lastScrollY + 6) bar.classList.add('compact')
+  if (Math.abs(y - lastScrollY) > 6) lastScrollY = y
+}, { passive: true })
 
 window.addEventListener('hashchange', () => showTab(location.hash.slice(1)))
 showTab(location.hash.slice(1))
