@@ -228,6 +228,57 @@ body.sheet-open { overflow: hidden; }
   transition: opacity 0.2s, transform 0.2s;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ===== Кредиты ===== */
+.loan-card { display: block; width: 100%; text-align: left; }
+.loan-card:active { opacity: 0.7; }
+.loan-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.loan-name { font-size: 17px; font-weight: 600; }
+.badge { font-size: 13px; color: var(--label-2); background: var(--fill); border-radius: 6px; padding: 2px 7px; }
+.big { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; margin-top: 10px; line-height: 1.1; }
+.caption { font-size: 13px; color: var(--label-2); margin-top: 2px; }
+.bar { height: 6px; border-radius: 3px; background: var(--fill); overflow: hidden; margin: 14px 0 6px; }
+.bar > span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--separator); }
+.meta b { display: block; font-size: 15px; font-weight: 600; }
+.meta span { font-size: 12px; color: var(--label-2); }
+.warn { color: var(--red); font-size: 13px; margin-top: 10px; }
+.btn-primary {
+  display: block; width: 100%; min-height: 50px;
+  border-radius: 12px;
+  background: var(--accent); color: #fff;
+  font-size: 17px; font-weight: 600;
+}
+.btn-primary:active { opacity: 0.8; }
+.empty .btn-primary { margin-top: 18px; }
+
+/* ===== Формы ===== */
+.field { display: flex; align-items: center; gap: 12px; }
+.field label { flex: none; }
+.field input {
+  flex: 1; min-width: 0;
+  font: inherit; font-size: 17px;
+  color: var(--label);
+  background: none; border: 0; outline: none;
+  text-align: right;
+  padding: 0;
+}
+.field input::placeholder { color: var(--label-3); }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--fill); border-radius: 9px; padding: 2px; margin-bottom: 8px; }
+.seg label { position: relative; text-align: center; font-size: 13px; font-weight: 500; padding: 7px 4px; border-radius: 7px; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label:has(input:checked) { background: var(--card); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--accent); }
+.form-error { color: var(--red); font-size: 13px; margin: 0 16px 12px; min-height: 0; }
+.form-error:empty { display: none; }
+.preview { text-align: center; padding: 14px 16px; margin-bottom: 16px; }
+.preview .big { font-size: 28px; margin-top: 2px; }
+
+/* ===== Тесты ===== */
+.test-row { font-size: 15px; align-items: flex-start; }
+.test-row small { color: var(--red); font-size: 13px; }
+.test-row .ok { color: var(--accent); font-weight: 700; }
+.test-row .fail { color: var(--red); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -255,12 +306,20 @@ body.sheet-open { overflow: hidden; }
 
   <!-- Кредиты -->
   <section class="screen" id="screen-loans" aria-labelledby="t-loans">
+    <div class="nav-bar">
+      <button class="icon-btn" id="add-loan" aria-label="Добавить кредит">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
     <h1 class="large-title" id="t-loans">Кредиты</h1>
-    <div class="card empty">
+    <div class="card empty" id="loans-empty">
       <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 21h18"/></svg></div>
       <h2>Кредитов пока нет</h2>
       <p>Добавьте ипотеку и потребительский кредит: остаток, ставку, платёж и день платежа.</p>
+      <button class="btn-primary" data-add-loan>Добавить кредит</button>
     </div>
+    <div id="loans-list"></div>
+    <p class="footnote" id="loans-note" hidden>Остаток уменьшается сам после каждого планового платежа. Если цифра разошлась с банком — откройте кредит и поправьте остаток.</p>
   </section>
 
   <!-- Сценарии -->
@@ -286,6 +345,13 @@ body.sheet-open { overflow: hidden; }
       <h2>Доходов и расходов пока нет</h2>
       <p>Записывайте траты по категориям — приложение посчитает, сколько можно направить на досрочку.</p>
     </div>
+  </section>
+
+  <!-- Встроенные тесты: index.html#test -->
+  <section class="screen" id="screen-test" aria-labelledby="t-test">
+    <h1 class="large-title" id="t-test">Тесты</h1>
+    <p class="subtitle" id="test-summary"></p>
+    <div class="group" id="test-list"></div>
   </section>
 
 </div>
@@ -347,6 +413,48 @@ body.sheet-open { overflow: hidden; }
   </div>
 </div>
 
+<!-- Кредит: добавление и правка -->
+<form class="sheet" id="sheet-loan" role="dialog" aria-modal="true" aria-labelledby="loan-title" novalidate>
+  <div class="sheet-head">
+    <button type="button" class="done" style="justify-self:start;font-weight:400" data-close-sheet>Отмена</button>
+    <h2 id="loan-title">Новый кредит</h2>
+    <button type="submit" class="done">Сохранить</button>
+  </div>
+
+  <div class="seg" role="radiogroup" aria-label="Тип кредита">
+    <label><input type="radio" name="kind" value="mortgage" checked>Ипотека</label>
+    <label><input type="radio" name="kind" value="consumer">Потребительский</label>
+    <label><input type="radio" name="kind" value="other">Другой</label>
+  </div>
+
+  <div class="group">
+    <div class="row field"><label for="lf-name">Название</label><input id="lf-name" name="name" autocomplete="off" placeholder="Ипотека" maxlength="40"></div>
+  </div>
+
+  <p class="card-title">Долг</p>
+  <div class="group">
+    <div class="row field"><label for="lf-original">Сумма при выдаче</label><input id="lf-original" name="original" inputmode="decimal" placeholder="0 ₽" autocomplete="off"></div>
+    <div class="row field"><label for="lf-balance">Остаток сейчас</label><input id="lf-balance" name="balance" inputmode="decimal" placeholder="0 ₽" autocomplete="off"></div>
+    <div class="row field"><label for="lf-rate">Ставка, % годовых</label><input id="lf-rate" name="rate" inputmode="decimal" placeholder="0" autocomplete="off"></div>
+  </div>
+  <p class="footnote" id="lf-balance-note">Остаток основного долга — смотрите в приложении банка.</p>
+
+  <p class="card-title">Платёж</p>
+  <div class="group">
+    <div class="row field"><label for="lf-payment">Платёж в месяц</label><input id="lf-payment" name="payment" inputmode="decimal" placeholder="0 ₽" autocomplete="off"></div>
+    <div class="row field"><label for="lf-term">или срок, мес</label><input id="lf-term" name="term" inputmode="numeric" placeholder="—" autocomplete="off"></div>
+    <div class="row field"><label for="lf-payday">День платежа</label><input id="lf-payday" name="payday" inputmode="numeric" placeholder="15" autocomplete="off"></div>
+  </div>
+  <p class="footnote">Если платёж не знаете, укажите оставшийся срок — платёж посчитаем по формуле аннуитета.</p>
+
+  <p class="form-error" id="lf-error" role="alert"></p>
+  <div class="card preview" id="lf-preview" hidden></div>
+
+  <div class="group" id="lf-delete-group" hidden>
+    <button type="button" class="row danger" id="lf-delete">Удалить кредит</button>
+  </div>
+</form>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -367,6 +475,163 @@ function daysBetween(a, b) { return Math.round((fromISO(b) - fromISO(a)) / 86400
 
 /** Суммы храним в копейках (целые числа). */
 function kop(rubles) { return Math.round(rubles * 100) }
+
+/** «5 380 000,50» → 538000050 копеек. Пустая строка или мусор → null. */
+function parseMoney(text) {
+  const s = String(text).replace(/[\s  ₽]/g, '').replace(',', '.')
+  if (!/^\d+(\.\d{0,2})?$/.test(s)) return null
+  return kop(Number(s))
+}
+function parseNumber(text) {
+  const s = String(text).replace(/[\s  %]/g, '').replace(',', '.')
+  if (!/^\d+(\.\d+)?$/.test(s)) return null
+  return Number(s)
+}
+
+const rubFmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 })
+const rubFmtExact = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+/** Крупные суммы — до рубля. */
+function fmtRub(k) { return rubFmt.format(Math.round(k / 100)) + ' ₽' }
+/** Платежи — с копейками. */
+function fmtRubExact(k) { return rubFmtExact.format(k / 100) + ' ₽' }
+/** Для полей ввода: без пробелов-разделителей, с копейками только если они есть. */
+function moneyInput(k) { return k % 100 === 0 ? String(k / 100) : (k / 100).toFixed(2).replace('.', ',') }
+
+function fmtTerm(months) {
+  if (!Number.isFinite(months)) return '—'
+  const y = Math.floor(months / 12), m = months % 12
+  const parts = []
+  if (y) parts.push(y + ' ' + plural(y, 'год', 'года', 'лет'))
+  if (m || !y) parts.push(m + ' мес')
+  return parts.join(' ')
+}
+
+const MONTHS = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
+function fmtMonthYear(d) {
+  const m = MONTHS[d.getMonth()]
+  return m[0].toUpperCase() + m.slice(1) + ' ' + d.getFullYear()
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+}
+
+/* ===== Расчётное ядро: кредиты =====
+   Все суммы — в копейках. Проценты каждого месяца округляются до копейки, как в банке.
+   Проценты считаются помесячно (ставка / 12), без учёта точного числа дней. */
+const MAX_MONTHS = 1200
+/** Платёж округлён до копейки, поэтому в конце может остаться «хвост» в несколько рублей.
+    Банк добавляет его к последнему платежу — мы тоже, если он меньше 0,5% платежа. */
+const TAIL_SHARE = 0.005
+
+function monthlyRate(annualRate) { return annualRate / 12 / 100 }
+
+/** Аннуитетный платёж P = S·i / (1 − (1+i)^−n), округлённый до копейки. */
+function annuityPayment(balance, annualRate, months) {
+  if (months <= 0) return balance
+  const i = monthlyRate(annualRate)
+  if (i === 0) return Math.ceil(balance / months)
+  return Math.round((balance * i) / (1 - Math.pow(1 + i, -months)))
+}
+
+/** Сколько месяцев до погашения при данном платеже: n = −ln(1 − S·i/P) / ln(1+i). Infinity — платёж не покрывает проценты. */
+function monthsToPayoff(balance, annualRate, payment) {
+  if (balance <= 0) return 0
+  if (payment <= 0) return Infinity
+  const i = monthlyRate(annualRate)
+  if (i === 0) return Math.ceil(balance / payment)
+  const x = 1 - (balance * i) / payment
+  if (x <= 0) return Infinity
+  return Math.max(1, Math.ceil(-Math.log(x) / Math.log(1 + i) - TAIL_SHARE))
+}
+
+/**
+ * Помесячная модель погашения.
+ * extraMonthly — досрочка к каждому платежу, lumpSum — разовая досрочка до первого платежа,
+ * mode: 'term' — уменьшаем срок (платёж прежний), 'payment' — уменьшаем платёж (срок прежний).
+ */
+function simulate({ balance, rate, payment, extraMonthly = 0, lumpSum = 0, mode = 'term' }) {
+  const i = monthlyRate(rate)
+  let b = balance
+  let p = payment
+  const balances = [b]
+  const horizon = monthsToPayoff(b, rate, p)
+  if (!Number.isFinite(horizon)) {
+    return { months: Infinity, totalInterest: Infinity, balances, firstPayment: p, infinite: true }
+  }
+  if (lumpSum > 0) {
+    b = Math.max(0, b - lumpSum)
+    if (mode === 'payment') p = annuityPayment(b, rate, horizon)
+  }
+  let firstPayment = p
+  let totalInterest = 0
+  let month = 0
+  while (b > 0 && month < MAX_MONTHS) {
+    month++
+    const interest = Math.round(b * i)
+    totalInterest += interest
+    b -= Math.min(p - interest, b)
+    if (b > 0 && b <= p * TAIL_SHARE) b = 0
+    if (extraMonthly > 0 && b > 0) {
+      b -= Math.min(extraMonthly, b)
+      if (mode === 'payment') {
+        const left = horizon - month
+        p = left > 0 ? annuityPayment(b, rate, left) : b
+        if (month === 1) firstPayment = p
+      }
+    }
+    balances.push(b)
+  }
+  return { months: month, totalInterest, balances, firstPayment, infinite: false }
+}
+
+/** Сколько плановых платежей (день payDay каждого месяца) попало в интервал (from, to]. Короткий месяц — платёж в последний день. */
+function paymentsBetween(from, to, payDay) {
+  const a = fromISO(from), b = fromISO(to)
+  if (b <= a) return 0
+  let count = 0
+  const cur = new Date(a.getFullYear(), a.getMonth(), 1)
+  while (cur <= b) {
+    const last = new Date(cur.getFullYear(), cur.getMonth() + 1, 0).getDate()
+    const pay = new Date(cur.getFullYear(), cur.getMonth(), Math.min(payDay, last))
+    if (pay > a && pay <= b) count++
+    cur.setMonth(cur.getMonth() + 1)
+  }
+  return count
+}
+
+/** Дата n-го платежа, начиная со следующего строго после asOf (n = 1 — ближайший). */
+function nthPaymentDate(asOf, payDay, n) {
+  const d = fromISO(asOf)
+  const lastThis = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
+  const offset = d.getDate() < Math.min(payDay, lastThis) ? 0 : 1
+  const t = new Date(d.getFullYear(), d.getMonth() + offset + Math.max(n, 1) - 1, 1)
+  const last = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate()
+  t.setDate(Math.min(payDay, last))
+  return t
+}
+
+/** Состояние кредита на дату asOf: от записанного остатка «проматываем» прошедшие плановые платежи. */
+function loanState(loan, asOf) {
+  const passed = paymentsBetween(loan.balanceDate, asOf, loan.payDay)
+  let balance = loan.balance
+  if (passed > 0) {
+    const past = simulate({ balance: loan.balance, rate: loan.rate, payment: loan.payment })
+    balance = past.balances[Math.min(passed, past.balances.length - 1)]
+  }
+  const rest = simulate({ balance, rate: loan.rate, payment: loan.payment })
+  const paid = Math.max(0, loan.originalAmount - balance)
+  return {
+    balance,
+    paid,
+    progress: loan.originalAmount > 0 ? Math.min(1, paid / loan.originalAmount) : 0,
+    monthsLeft: rest.months,
+    interestLeft: rest.totalInterest,
+    infinite: rest.infinite,
+    nextPayment: balance > 0 ? nthPaymentDate(asOf, loan.payDay, 1) : null,
+    payoffDate: rest.infinite || balance <= 0 ? null : nthPaymentDate(asOf, loan.payDay, rest.months),
+  }
+}
 
 function uid() {
   const a = new Uint32Array(2)
@@ -472,20 +737,15 @@ async function requestPersist() {
 /* ===== Пример данных =====
    Два кредита и три полных месяца плюс текущий. Суммы фиксированные, без случайностей,
    чтобы пример всегда выглядел одинаково. В текущем месяце кафе специально выше обычного. */
-function annuity(balance, annualRate, months) {
-  const i = annualRate / 12 / 100
-  return i === 0 ? balance / months : (balance * i) / (1 - Math.pow(1 + i, -months))
-}
-
 function demoState() {
   const s = emptyState()
   const today = todayISO()
 
   s.loans = [
     { id: uid(), name: 'Ипотека', kind: 'mortgage', originalAmount: kop(6500000), balance: kop(5380000),
-      balanceDate: today, rate: 9.5, payment: kop(annuity(5380000, 9.5, 204)), payDay: 15 },
+      balanceDate: today, rate: 9.5, payment: annuityPayment(kop(5380000), 9.5, 204), payDay: 15 },
     { id: uid(), name: 'Потребительский', kind: 'consumer', originalAmount: kop(800000), balance: kop(512000),
-      balanceDate: today, rate: 18.9, payment: kop(annuity(512000, 18.9, 30)), payDay: 5 },
+      balanceDate: today, rate: 18.9, payment: annuityPayment(kop(512000), 18.9, 30), payDay: 5 },
   ]
 
   // [категория, день месяца, сумма в рублях]
@@ -657,9 +917,237 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   toast('Все данные удалены')
 })
 
+/* ===== Экран «Кредиты» ===== */
+const KIND_LABEL = { mortgage: 'Ипотека', consumer: 'Потребительский', other: 'Кредит' }
+const KIND_ORDER = { mortgage: 0, consumer: 1, other: 2 }
+
+function sortedLoans() {
+  return [...state.loans].sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || b.balance - a.balance)
+}
+
+function renderLoans() {
+  const today = todayISO()
+  const list = document.getElementById('loans-list')
+  document.getElementById('loans-empty').hidden = state.loans.length > 0
+  document.getElementById('loans-note').hidden = state.loans.length === 0
+  list.innerHTML = sortedLoans().map((loan) => {
+    const s = loanState(loan, today)
+    const pct = Math.round(s.progress * 100)
+    const closed = s.balance <= 0
+    return '<button class="card loan-card" data-loan="' + loan.id + '">'
+      + '<div class="loan-head"><span class="loan-name">' + escapeHTML(loan.name) + '</span>'
+      + '<span class="badge">' + String(loan.rate).replace('.', ',') + '%</span></div>'
+      + '<div class="big">' + (closed ? 'Закрыт' : fmtRub(s.balance)) + '</div>'
+      + '<div class="caption">' + (closed ? 'долг полностью выплачен' : 'остаток долга') + '</div>'
+      + '<div class="bar"><span style="width:' + pct + '%"></span></div>'
+      + '<div class="caption">Выплачено ' + pct + '% · ' + fmtRub(s.paid) + ' из ' + fmtRub(loan.originalAmount) + '</div>'
+      + (closed ? '' : '<div class="meta">'
+        + '<div><b>' + fmtRubExact(loan.payment) + '</b><span>платёж, ' + loan.payDay + '-го</span></div>'
+        + '<div><b>' + fmtTerm(s.monthsLeft) + '</b><span>осталось</span></div>'
+        + '<div><b>' + (s.payoffDate ? fmtMonthYear(s.payoffDate) : '—') + '</b><span>закрытие</span></div>'
+        + '</div>')
+      + (s.infinite ? '<p class="warn">Платёж не покрывает проценты — долг не уменьшается. Проверьте ставку и платёж.</p>' : '')
+      + '</button>'
+  }).join('')
+}
+
+/* --- Форма кредита --- */
+const loanForm = document.getElementById('sheet-loan')
+let editingLoanId = null
+
+function openLoanForm(id) {
+  editingLoanId = id || null
+  const loan = id ? state.loans.find((l) => l.id === id) : null
+  const f = loanForm.elements
+  loanForm.reset()
+  document.getElementById('loan-title').textContent = loan ? loan.name : 'Новый кредит'
+  document.getElementById('lf-delete-group').hidden = !loan
+  if (loan) {
+    const s = loanState(loan, todayISO())
+    f.kind.value = loan.kind
+    f.name.value = loan.name
+    f.original.value = moneyInput(loan.originalAmount)
+    f.balance.value = moneyInput(s.balance)
+    f.rate.value = String(loan.rate).replace('.', ',')
+    f.payment.value = moneyInput(loan.payment)
+    f.payday.value = loan.payDay
+    document.getElementById('lf-balance-note').textContent =
+      'Остаток посчитан на сегодня с учётом плановых платежей. Если в банке другая цифра — впишите её.'
+  } else {
+    document.getElementById('lf-balance-note').textContent = 'Остаток основного долга — смотрите в приложении банка.'
+  }
+  document.getElementById('lf-error').textContent = ''
+  updateLoanPreview()
+  openSheet('sheet-loan')
+}
+
+/** Читает форму. Возвращает { loan } или { error }. */
+function readLoanForm() {
+  const f = loanForm.elements
+  const kind = f.kind.value
+  const original = parseMoney(f.original.value)
+  const balance = parseMoney(f.balance.value)
+  const rate = parseNumber(f.rate.value)
+  let payment = f.payment.value.trim() ? parseMoney(f.payment.value) : null
+  const term = f.term.value.trim() ? parseNumber(f.term.value) : null
+  const payDay = f.payday.value.trim() ? parseNumber(f.payday.value) : 15
+
+  if (balance === null || balance <= 0) return { error: 'Укажите остаток долга' }
+  if (original === null || original <= 0) return { error: 'Укажите сумму кредита при выдаче' }
+  if (original < balance) return { error: 'Сумма при выдаче не может быть меньше остатка' }
+  if (rate === null || rate > 100) return { error: 'Укажите ставку от 0 до 100%' }
+  if (f.payment.value.trim() && (payment === null || payment <= 0)) return { error: 'Платёж указан с ошибкой' }
+  if (payment === null) {
+    if (term === null || !Number.isInteger(term) || term < 1 || term > 600) return { error: 'Укажите платёж или срок в месяцах' }
+    payment = annuityPayment(balance, rate, term)
+  }
+  if (!Number.isInteger(payDay) || payDay < 1 || payDay > 31) return { error: 'День платежа — число от 1 до 31' }
+  if (!Number.isFinite(monthsToPayoff(balance, rate, payment))) {
+    return { error: 'Платёж ' + fmtRubExact(payment) + ' не покрывает проценты (' + fmtRubExact(Math.round(balance * monthlyRate(rate))) + ' в месяц). Проверьте ставку и платёж.' }
+  }
+  return {
+    loan: {
+      name: f.name.value.trim() || KIND_LABEL[kind],
+      kind, originalAmount: original, balance, balanceDate: todayISO(), rate, payment, payDay,
+    },
+  }
+}
+
+function updateLoanPreview() {
+  const box = document.getElementById('lf-preview')
+  const { loan } = readLoanForm()
+  if (!loan) { box.hidden = true; return }
+  const s = loanState(loan, todayISO())
+  box.hidden = false
+  box.innerHTML = '<div class="caption">Закроется</div><div class="big">' + fmtMonthYear(s.payoffDate) + '</div>'
+    + '<div class="caption">через ' + fmtTerm(s.monthsLeft) + ' · платёж ' + fmtRubExact(loan.payment)
+    + ' · проценты впереди ' + fmtRub(s.interestLeft) + '</div>'
+}
+
+loanForm.addEventListener('input', () => {
+  document.getElementById('lf-error').textContent = ''
+  updateLoanPreview()
+})
+
+loanForm.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const { loan, error } = readLoanForm()
+  if (error) {
+    document.getElementById('lf-error').textContent = error
+    document.getElementById('lf-error').scrollIntoView({ block: 'center', behavior: 'smooth' })
+    return
+  }
+  if (editingLoanId) {
+    const i = state.loans.findIndex((l) => l.id === editingLoanId)
+    state.loans[i] = { ...state.loans[i], ...loan }
+  } else {
+    state.loans.push({ id: uid(), ...loan })
+  }
+  save()
+  closeSheet()
+  renderAll()
+  toast(editingLoanId ? 'Кредит обновлён' : 'Кредит добавлен')
+})
+
+document.getElementById('lf-delete').addEventListener('click', () => {
+  const loan = state.loans.find((l) => l.id === editingLoanId)
+  if (!loan || !confirm('Удалить «' + loan.name + '» вместе с историей досрочных погашений?')) return
+  state.loans = state.loans.filter((l) => l.id !== loan.id)
+  state.prepayments = state.prepayments.filter((p) => p.loanId !== loan.id)
+  save()
+  closeSheet()
+  renderAll()
+  toast('Кредит удалён')
+})
+
+document.getElementById('add-loan').addEventListener('click', () => openLoanForm())
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-add-loan]')) openLoanForm()
+  const card = e.target.closest('[data-loan]')
+  if (card) openLoanForm(card.dataset.loan)
+})
+
+/* ===== Встроенные тесты (index.html#test) =====
+   Проверяют расчётное ядро без каких-либо инструментов: открыть адрес и посмотреть на галочки. */
+const TESTS = []
+function test(name, fn) { TESTS.push({ name, fn }) }
+function eq(actual, expected, tolerance = 0) {
+  const ok = typeof expected === 'number' && typeof actual === 'number'
+    ? (Number.isFinite(expected) ? Math.abs(actual - expected) <= tolerance : actual === expected)
+    : actual === expected
+  if (!ok) throw new Error('ожидалось ' + expected + ', получено ' + actual)
+}
+
+test('Эталон: 5 000 000 ₽, 12%, 240 мес → платёж 55 054,31 ₽', () => eq(annuityPayment(kop(5000000), 12, 240), 5505431))
+test('Эталон: при платеже 55 054,31 ₽ срок 240 мес', () => eq(monthsToPayoff(kop(5000000), 12, 5505431), 240))
+test('Эталон: модель гасит долг ровно за 240 мес', () => {
+  const r = simulate({ balance: kop(5000000), rate: 12, payment: 5505431 })
+  eq(r.months, 240)
+  eq(r.balances[240], 0)
+})
+test('Эталон: переплата ≈ 8 213 034 ₽ (±50 ₽ на округлениях)', () => {
+  eq(simulate({ balance: kop(5000000), rate: 12, payment: 5505431 }).totalInterest, kop(8213034), kop(50))
+})
+test('Месяц: 1 000 000 ₽ под 12%, платёж 20 000 ₽ → остаток 990 000 ₽', () => {
+  eq(simulate({ balance: kop(1000000), rate: 12, payment: kop(20000) }).balances[1], kop(990000))
+})
+test('Срок по формуле: 1 000 000 ₽, 12%, 20 000 ₽ → 70 мес', () => {
+  eq(monthsToPayoff(kop(1000000), 12, kop(20000)), 70)
+  eq(simulate({ balance: kop(1000000), rate: 12, payment: kop(20000) }).months, 70)
+})
+test('Платёж округлён до копейки вниз — лишний месяц не появляется', () => {
+  // 512 000 ₽, 18,9%, 30 мес. p − 1 коп. — так бывает, когда банк округляет платёж вниз.
+  const p = annuityPayment(kop(512000), 18.9, 30)
+  eq(monthsToPayoff(kop(512000), 18.9, p), 30)
+  eq(simulate({ balance: kop(512000), rate: 18.9, payment: p }).months, 30)
+  eq(monthsToPayoff(kop(512000), 18.9, p - 1), 30)
+})
+test('Нулевая ставка: 120 000 ₽ на 12 мес → 10 000 ₽', () => eq(annuityPayment(kop(120000), 0, 12), kop(10000)))
+test('Платёж не покрывает проценты → «долг не гасится»', () => {
+  eq(monthsToPayoff(kop(1000000), 12, kop(10000)), Infinity)
+  eq(simulate({ balance: kop(1000000), rate: 12, payment: kop(9000) }).infinite, true)
+})
+test('Платежи между датами: 10.01 → 10.04, день 15 → 3', () => eq(paymentsBetween('2026-01-10', '2026-04-10', 15), 3))
+test('Платежи между датами: день 31 в феврале — 28-го', () => eq(paymentsBetween('2026-01-31', '2026-03-01', 31), 1))
+test('Платежи между датами: та же дата → 0', () => eq(paymentsBetween('2026-05-05', '2026-05-05', 5), 0))
+test('Ближайший платёж: 10.10, день 15 → 15.10', () => eq(toISO(nthPaymentDate('2026-10-10', 15, 1)), '2026-10-15'))
+test('Ближайший платёж: в день платежа → следующий месяц', () => eq(toISO(nthPaymentDate('2026-10-15', 15, 1)), '2026-11-15'))
+test('Ближайший платёж: день 31 после 31.01 → 28.02', () => eq(toISO(nthPaymentDate('2026-01-31', 31, 1)), '2026-02-28'))
+test('Остаток на сегодня: прошло 2 платежа → 979 900 ₽', () => {
+  const loan = { originalAmount: kop(1200000), balance: kop(1000000), balanceDate: '2026-01-01', rate: 12, payment: kop(20000), payDay: 15 }
+  eq(loanState(loan, '2026-02-20').balance, kop(979900))
+})
+test('Выплачено + осталось = сумма при выдаче', () => {
+  const loan = { originalAmount: kop(1200000), balance: kop(1000000), balanceDate: '2026-01-01', rate: 12, payment: kop(20000), payDay: 15 }
+  const s = loanState(loan, '2026-06-20')
+  eq(s.paid + s.balance, kop(1200000))
+})
+test('Дата закрытия: 70 мес от 01.01.2026, день 15 → октябрь 2031', () => {
+  const loan = { originalAmount: kop(1000000), balance: kop(1000000), balanceDate: '2026-01-01', rate: 12, payment: kop(20000), payDay: 15 }
+  eq(toISO(loanState(loan, '2026-01-01').payoffDate), '2031-10-15')
+})
+test('Ввод суммы: «5 380 000,50» → 538 000 050 коп.', () => eq(parseMoney('5 380 000,50'), 538000050))
+test('Ввод суммы: мусор → пусто', () => { eq(parseMoney('abc'), null); eq(parseMoney('12,345'), null); eq(parseMoney(''), null) })
+test('Срок словами: 204 мес → «17 лет», 15 мес → «1 год 3 мес»', () => { eq(fmtTerm(204), '17 лет'); eq(fmtTerm(15), '1 год 3 мес') })
+
+function renderTests() {
+  const rows = TESTS.map(({ name, fn }) => {
+    try { fn(); return { name, ok: true } } catch (e) { return { name, ok: false, error: e.message } }
+  })
+  const passed = rows.filter((r) => r.ok).length
+  document.getElementById('test-summary').textContent = 'Пройдено ' + passed + ' из ' + rows.length
+  document.getElementById('test-summary').style.color = passed === rows.length ? 'var(--accent)' : 'var(--red)'
+  document.getElementById('test-list').innerHTML = rows.map((r) =>
+    '<div class="row test-row"><span>' + escapeHTML(r.name)
+    + (r.ok ? '' : '<br><small>' + escapeHTML(r.error) + '</small>') + '</span>'
+    + '<span class="' + (r.ok ? 'ok' : 'fail') + '">' + (r.ok ? '✓' : '✗') + '</span></div>').join('')
+  return { passed, total: rows.length, failed: rows.filter((r) => !r.ok) }
+}
+
 /** Перерисовывает всё, что зависит от данных. Экраны будут добавляться сюда по этапам. */
 function renderAll() {
   renderSettings()
+  renderLoans()
 }
 
 /* ===== Навигация по вкладкам =====
@@ -668,8 +1156,10 @@ function renderAll() {
 const TABS = ['home', 'loans', 'scenarios', 'money']
 
 function showTab(name) {
-  if (!TABS.includes(name)) name = 'home'
-  for (const t of TABS) {
+  closeSheet()
+  if (name === 'test') renderTests()
+  else if (!TABS.includes(name)) name = 'home'
+  for (const t of [...TABS, 'test']) {
     document.getElementById('screen-' + t).classList.toggle('active', t === name)
   }
   for (const btn of document.querySelectorAll('.tab')) {
