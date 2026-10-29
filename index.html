@@ -136,7 +136,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   max-width: 480px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   height: var(--tab-h);
 }
 .tab {
@@ -419,6 +419,51 @@ body.sheet-open { overflow: hidden; }
 .hint-actions .link-btn { margin-top: 0; text-align: left; }
 .hint-hide { color: var(--label-2) !important; flex: none; }
 
+/* ===== Копилка ===== */
+.tab { font-size: 9.5px; }
+.row.intro > span:first-child { white-space: nowrap; flex: none; }
+.row.intro .value { font-size: 14px; }
+.today-card { text-align: center; padding: 22px 16px 16px; }
+.today-card .label { font-size: 15px; color: var(--label-2); }
+.today-card .sum-big { font-size: 44px; margin: 4px 0 2px; }
+.today-card .caption { margin-bottom: 14px; }
+.today-card .done-big { font-size: 20px; font-weight: 700; color: var(--accent); margin: 8px 0 4px; }
+.today-card .row-links { display: flex; justify-content: center; gap: 20px; }
+.comeback { background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-bottom: 14px; text-align: left; }
+.btn-primary.saved-anim { animation: pop 0.35s ease-out; }
+@keyframes pop { 50% { transform: scale(1.04); } }
+.coin {
+  position: fixed; left: 50%; top: 40%; z-index: 40; pointer-events: none;
+  width: 52px; height: 52px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 35% 30%, #ffe680, #f5b700 60%, #c98a00);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.35), 0 4px 10px rgba(0, 0, 0, 0.2);
+  color: #8a5a00; font-size: 24px; font-weight: 800;
+  animation: coin 0.9s ease-in forwards;
+}
+@keyframes coin { 0% { transform: translate(-50%, -40px) scale(0.6); opacity: 0; } 25% { opacity: 1; transform: translate(-50%, 0) scale(1.1); } 100% { transform: translate(-50%, 220px) scale(0.5); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .coin { display: none; } .btn-primary.saved-anim { animation: none; } }
+.habit-dots { display: grid; grid-template-columns: repeat(11, 1fr); gap: 5px; margin: 12px 0 8px; }
+.habit-dots i { aspect-ratio: 1; border-radius: 50%; background: var(--fill); }
+.habit-dots i.s { background: var(--accent); }
+.habit-dots i.f { background: #64d2ff; }
+.habit-dots i.t { box-shadow: inset 0 0 0 2px var(--accent); }
+.habit-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--label-2); }
+.lesson-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+.lesson-row .st { font-size: 13px; color: var(--label-2); white-space: nowrap; }
+.lesson-row .st.ok { color: var(--accent); }
+.card-text p { font-size: 16px; line-height: 1.45; margin-bottom: 10px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin: 16px 0 10px; }
+.quiz-opt {
+  display: block; width: 100%; text-align: left;
+  background: var(--card); border-radius: 12px; border: 2px solid transparent;
+  padding: 12px 14px; margin-bottom: 8px; font-size: 16px; min-height: 48px;
+}
+.quiz-opt.right { border-color: var(--accent); background: var(--accent-soft); }
+.quiz-opt.wrong { border-color: var(--red); }
+.quiz-opt:disabled { color: var(--label); opacity: 1; cursor: default; }
+.quiz-why { font-size: 15px; line-height: 1.4; margin: 8px 0 16px; }
+
 /* ===== Как пользоваться ===== */
 .help-intro { text-align: center; padding: 24px 20px; }
 .help-intro h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
@@ -534,6 +579,14 @@ body.sheet-open { overflow: hidden; }
     <div id="money-main"></div>
   </section>
 
+  <!-- Копилка: игра-привычка и база знаний -->
+  <section class="screen" id="screen-piggy" aria-labelledby="t-piggy">
+    <h1 class="large-title" id="t-piggy">Копилка</h1>
+    <div id="piggy-main"></div>
+    <p class="card-title">База знаний</p>
+    <div id="learn-main"></div>
+  </section>
+
   <!-- Встроенные тесты: index.html#test -->
   <section class="screen" id="screen-test" aria-labelledby="t-test">
     <h1 class="large-title" id="t-test">Тесты</h1>
@@ -556,6 +609,10 @@ body.sheet-open { overflow: hidden; }
     <button class="tab" role="tab" data-tab="scenarios" aria-controls="screen-scenarios">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M4 16l5-5 4 3 7-8"/><path d="M16 6h4v4"/></svg>
       Сценарии
+    </button>
+    <button class="tab" role="tab" data-tab="piggy" aria-controls="screen-piggy">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11c0-3.3-3.1-6-7-6-1.3 0-2.5.3-3.5.8L6 4.5v3A5.6 5.6 0 0 0 5 9.5H3v4h2.2c.6 1.2 1.6 2.2 2.8 2.9V19h3v-1.6h2V19h3v-2.6c1.8-1.1 3-3 3-5.4z"/><path d="M15.5 10h.01"/></svg>
+      Копилка
     </button>
     <button class="tab" role="tab" data-tab="money" aria-controls="screen-money">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/><path d="M16 15h2"/></svg>
@@ -648,6 +705,11 @@ body.sheet-open { overflow: hidden; }
       <p>Через месяц-другой на «Главной» появится, сколько денег в месяц можно спокойно отдавать на досрочку.</p>
     </li>
     <li>
+      <b>Играйте в «Копилку»</b>
+      <p>Каждый день откладывайте небольшую сумму и нажимайте «Отложил». Каждый месяц сумма растёт на 50%, но не больше, чем позволяет бюджет. За 66 дней сложится привычка.</p>
+      <p>Там же — карточки по финансам: минута чтения и один вопрос в день.</p>
+    </li>
+    <li>
       <b>Сохраняйте копию раз в месяц</b>
       <p>Все цифры хранятся только на этом телефоне. Чтобы их не потерять: «Деньги» → значок шестерёнки → «Сохранить копию в файл».</p>
     </li>
@@ -694,6 +756,16 @@ body.sheet-open { overflow: hidden; }
     <button type="button" class="row danger" id="tx-delete">Удалить запись</button>
   </div>
 </form>
+
+<!-- Карточка базы знаний -->
+<div class="sheet" id="sheet-card" role="dialog" aria-modal="true" aria-labelledby="card-title">
+  <div class="sheet-head">
+    <span></span>
+    <h2 id="card-title">Карточка</h2>
+    <button class="done" data-close-sheet>Закрыть</button>
+  </div>
+  <div id="card-body"></div>
+</div>
 
 <!-- Кредит: добавление и правка -->
 <form class="sheet" id="sheet-loan" role="dialog" aria-modal="true" aria-labelledby="loan-title" novalidate>
@@ -1165,6 +1237,211 @@ function buildHints(data, today) {
   return hints.sort((a, c) => c.priority - a.priority)
 }
 
+/* ===== Игра «Копилка» =====
+   Каждый день откладываем сумму дня. Каждый новый календарный месяц игры она растёт на 50%,
+   но не выше потолка «Свободно в месяц» ÷ 30. Пропуски закрываются заморозками (2 в месяц),
+   путь привычки (66 дней) не обнуляется никогда. */
+const GAME_GROWTH = 0.5
+const HABIT_DAYS = 66
+const FREEZES_PER_MONTH = 2
+const PIGGY_LEVELS = [
+  [0, 'Первая монетка'], [kop(1000), 'Звон в копилке'], [kop(5000), 'Хорошее начало'], [kop(10000), 'Десятка'],
+  [kop(25000), 'Четверть сотни'], [kop(50000), 'Полтинник'], [kop(100000), 'Сотня'],
+  [kop(250000), 'Четверть миллиона'], [kop(500000), 'Полмиллиона'], [kop(1000000), 'Миллионер'],
+]
+
+function addDaysISO(iso, n) { const d = fromISO(iso); d.setDate(d.getDate() + n); return toISO(d) }
+function gameMonthIndex(startISO, iso) {
+  const a = fromISO(startISO), b = fromISO(iso)
+  return Math.max(0, (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth())
+}
+/** Округление до 10 ₽. */
+function round10(k) { return Math.round(k / kop(10)) * kop(10) }
+
+/**
+ * Сумма дня. free — «Свободно в месяц» (копейки) или null, если бюджет ещё не ведётся.
+ * Возвращает { amount, raw, cap, capped, month }.
+ */
+function dailyTarget(game, iso, free) {
+  const month = gameMonthIndex(game.startDate || iso, iso)
+  const raw = round10(game.startAmount * Math.pow(1 + GAME_GROWTH, month))
+  if (free == null) return { amount: raw, raw, cap: null, capped: false, month }
+  // Бюджет в минусе — сумма не растёт, остаётся стартовой.
+  const cap = free > 0 ? Math.max(Math.floor(free / 30 / kop(10)) * kop(10), game.startAmount) : game.startAmount
+  return { amount: Math.min(raw, cap), raw, cap, capped: raw > cap, month }
+}
+
+/**
+ * Разбор дней от старта до вчера (сегодня ещё можно успеть): какие отложены, какие закрыты заморозкой.
+ * Возвращает { saved, frozen: Set, missed: Set, streak, habit, savedToday }.
+ */
+function gameProgress(game, today) {
+  const res = { saved: 0, frozen: new Set(), missed: new Set(), streak: 0, habit: 0, savedToday: !!game.days[today] }
+  if (!game.startDate) return res
+  const usedFreezes = {}
+  let streak = 0
+  for (let d = game.startDate; d < today; d = addDaysISO(d, 1)) {
+    if (game.days[d]) { res.saved++; streak++; continue }
+    const m = monthKey(d)
+    if ((usedFreezes[m] || 0) < FREEZES_PER_MONTH) {
+      usedFreezes[m] = (usedFreezes[m] || 0) + 1
+      res.frozen.add(d)
+      streak++
+    } else {
+      res.missed.add(d)
+      streak = 0
+    }
+  }
+  if (res.savedToday) { res.saved++; streak++ }
+  res.streak = streak
+  res.habit = Math.min(HABIT_DAYS, res.saved + res.frozen.size)
+  res.freezesLeft = FREEZES_PER_MONTH - (usedFreezes[monthKey(today)] || 0)
+  return res
+}
+
+function piggyTotal(game) { return Object.values(game.days).reduce((a, b) => a + b, 0) }
+function piggyLevel(lifetime) {
+  let i = 0
+  while (i + 1 < PIGGY_LEVELS.length && lifetime >= PIGGY_LEVELS[i + 1][0]) i++
+  return { index: i, name: PIGGY_LEVELS[i][1], next: PIGGY_LEVELS[i + 1] || null }
+}
+
+/* ===== База знаний: карточки и интервальное повторение =====
+   Ответил верно — карточка вернётся позже (1 → 3 → 7 → 21 день), ошибся — завтра. */
+const REVIEW_DAYS = [1, 3, 7, 21]
+
+function reviewCard(card, correct, today) {
+  const box = correct ? Math.min((card?.box ?? -1) + 1, REVIEW_DAYS.length - 1) : 0
+  return { box, due: addDaysISO(today, correct ? REVIEW_DAYS[box] : 1), right: (card?.right || 0) + (correct ? 1 : 0) }
+}
+/** Освоена — два верных ответа подряд (дошла до ящика 1 и выше). */
+function cardMastered(c) { return !!c && c.box >= 1 }
+
+/** Карточки на сегодня: сначала повторения (до 3), потом одна новая, если сегодня новую ещё не открывали. */
+function cardsForToday(learn, lessons, today) {
+  const due = lessons.filter((l) => learn.cards[l.id] && learn.cards[l.id].due <= today).slice(0, 3)
+  const fresh = learn.newOn === today ? [] : lessons.filter((l) => !learn.cards[l.id]).slice(0, 1)
+  return [...due, ...fresh]
+}
+
+/* Карточки базы знаний. Порядок — от самого полезного для закрытия ипотеки.
+   text — абзацы; q — вопрос; options — варианты; answer — номер верного; why — объяснение. */
+const LESSONS = [
+  {
+    id: 'annuity', title: 'Куда уходит ваш платёж',
+    text: [
+      'При аннуитетном платеже вы каждый месяц платите одну и ту же сумму. Но внутри неё всё меняется.',
+      'Проценты банк считает от остатка долга. В начале остаток большой — и большая часть платежа уходит на проценты. Например, при ипотеке 5,4 млн ₽ под 9,5% из первого платежа 53 тыс. ₽ около 43 тыс. ₽ — это проценты.',
+      'Поэтому досрочка в первые годы работает сильнее всего: каждый рубль сразу уменьшает долг, на который начисляются проценты.',
+    ],
+    q: 'На что уходит большая часть первых платежей по ипотеке?',
+    options: ['На основной долг', 'На проценты банку', 'На страховку'], answer: 1,
+    why: 'В начале остаток долга большой, а проценты считаются от остатка. Поэтому ранняя досрочка экономит больше всего.',
+  },
+  {
+    id: 'term-vs-payment', title: 'Срок или платёж',
+    text: [
+      'Когда вы вносите деньги досрочно, банк предлагает: уменьшить срок или уменьшить ежемесячный платёж.',
+      '«Уменьшить срок» — платёж прежний, долг закончится раньше. Процентов вы заплатите меньше всего.',
+      '«Уменьшить платёж» — срок прежний, платить каждый месяц станет легче. Экономия на процентах меньше, зато больше денег на жизнь.',
+      'Если нагрузка комфортная — выгоднее сокращать срок. Если тяжело — уменьшайте платёж.',
+    ],
+    q: 'Какой вариант досрочки экономит больше процентов?',
+    options: ['Уменьшить платёж', 'Уменьшить срок', 'Одинаково'], answer: 1,
+    why: 'При сокращении срока долг гасится быстрее, и проценты начисляются меньше месяцев. Это видно во вкладке «Сценарии».',
+  },
+  {
+    id: 'avalanche', title: 'Лавина и снежный ком',
+    text: [
+      'Если кредитов несколько, свободные деньги можно направлять по-разному.',
+      '«Лавина» — сначала гасите кредит с самой высокой ставкой. Это математически выгоднее всего.',
+      '«Снежный ком» — сначала гасите самый маленький кредит. Он быстро закроется, и это мотивирует.',
+      'В обоих способах, когда кредит закрыт, его платёж добавляется к следующему. Так сумма на долги не уменьшается, а долги тают всё быстрее.',
+    ],
+    q: 'Какой способ обычно экономит больше всего денег?',
+    options: ['Сначала самый маленький долг', 'Сначала самый дорогой по ставке', 'Платить всем поровну'], answer: 1,
+    why: 'Деньги, направленные в самый дорогой кредит, «гасят» самые высокие проценты. Сравнение есть во вкладке «Сценарии».',
+  },
+  {
+    id: 'compound', title: 'Сложный процент и правило 72',
+    text: [
+      'Сложный процент — это проценты на проценты. На вкладе с капитализацией деньги растут всё быстрее.',
+      'Быстро прикинуть помогает правило 72: разделите 72 на ставку — получите, за сколько лет сумма примерно удвоится.',
+      'Например, при 12% годовых деньги удвоятся примерно за 6 лет. При 6% — примерно за 12 лет.',
+    ],
+    q: 'За сколько лет примерно удвоятся деньги при 12% годовых?',
+    options: ['За 3 года', 'За 6 лет', 'За 12 лет'], answer: 1,
+    why: '72 ÷ 12 = 6. Правило приблизительное, но для быстрых прикидок хватает.',
+  },
+  {
+    id: 'tax-deduction', title: 'Налоговый вычет за квартиру',
+    text: [
+      'Если вы платите НДФЛ 13%, государство может вернуть часть денег за покупку жилья.',
+      'Вычет за саму квартиру — с суммы до 2 млн ₽, то есть вернуть можно до 260 тыс. ₽.',
+      'Отдельно есть вычет за проценты по ипотеке — с суммы до 3 млн ₽, то есть до 390 тыс. ₽. Его получают по мере уплаты процентов.',
+      'Вернуть можно не больше, чем вы заплатили налога. Условия меняются — проверьте актуальные на nalog.gov.ru. Возврат — отличный кандидат на досрочку.',
+    ],
+    q: 'Сколько максимум можно вернуть за проценты по ипотеке?',
+    options: ['260 тыс. ₽', '390 тыс. ₽', 'Без ограничений'], answer: 1,
+    why: 'Вычет по процентам — с суммы до 3 млн ₽: 13% от неё — 390 тыс. ₽. Вычет за саму квартиру — отдельный, до 260 тыс. ₽.',
+  },
+  {
+    id: 'deposit-vs-prepay', title: 'Вклад или досрочка',
+    text: [
+      'Досрочка — это как вклад под ставку вашего кредита: каждый внесённый рубль «зарабатывает» вам непотраченные проценты.',
+      'Если ставка по вкладу заметно выше ставки ипотеки, бывает выгоднее копить на вкладе. Но доход по вкладу облагается налогом сверх необлагаемого лимита, а ставки по вкладам меняются.',
+      'Если ставка ипотеки выше ставки по вкладам — досрочка почти всегда выгоднее.',
+    ],
+    q: 'Ипотека под 9,5%, лучший вклад — 6%. Что выгоднее?',
+    options: ['Положить на вклад', 'Внести досрочно', 'Без разницы'], answer: 1,
+    why: 'Досрочка «приносит» 9,5% экономии, а вклад — 6% до налога. Разница в пользу досрочки.',
+  },
+  {
+    id: 'refinance', title: 'Ключевая ставка и рефинансирование',
+    text: [
+      'Ставки по новым кредитам зависят от ключевой ставки Центробанка. Когда она падает, новые ипотеки дешевеют.',
+      'Рефинансирование — это новый кредит под меньший процент, которым гасят старый.',
+      'Обычно о нём есть смысл думать, если новая ставка ниже вашей хотя бы на 1,5–2 процентных пункта. Учтите расходы: оценку квартиры, страховку, переоформление залога.',
+    ],
+    q: 'Когда стоит задуматься о рефинансировании?',
+    options: ['Когда ставки по новым кредитам заметно ниже вашей', 'Когда ключевая ставка растёт', 'Каждый год'], answer: 0,
+    why: 'Выгода появляется, только если новая ставка заметно ниже и экономия покрывает расходы на переоформление.',
+  },
+  {
+    id: 'pay-yourself', title: 'Сначала заплатите себе',
+    text: [
+      'Самая надёжная привычка: откладывать сразу в день зарплаты, а не «что останется в конце месяца» — обычно не остаётся ничего.',
+      'Помогает правило 50/30/20: 50% дохода — на обязательное, 30% — на желания, 20% — на накопления и досрочку. Это ориентир, а не закон.',
+      'Автоматический перевод на отдельный счёт в день зарплаты делает это без усилий воли.',
+    ],
+    q: 'Когда лучше откладывать деньги?',
+    options: ['В конце месяца, что останется', 'Сразу после зарплаты', 'Когда будет премия'], answer: 1,
+    why: 'Отложенное сразу не потратится «случайно». Это и есть «заплатить сначала себе».',
+  },
+  {
+    id: 'credit-card', title: 'Кредитка без процентов',
+    text: [
+      'У большинства кредитных карт есть льготный период: если вернуть весь долг до его конца, процентов не будет.',
+      'Если не успеть — проценты начислятся, и обычно ставка по карте намного выше ипотечной.',
+      'Снятие наличных и переводы с кредитки часто не входят в льготный период и стоят дорого. Проверьте условия своей карты.',
+    ],
+    q: 'Как пользоваться кредиткой без переплаты?',
+    options: ['Вносить минимальный платёж', 'Гасить весь долг до конца льготного периода', 'Снимать наличные'], answer: 1,
+    why: 'Минимальный платёж не спасает от процентов. Без переплаты — только полное погашение в льготный период.',
+  },
+  {
+    id: 'deposit-insurance', title: 'Страховка вкладов',
+    text: [
+      'Вклады в российских банках застрахованы государством через Агентство по страхованию вкладов (АСВ).',
+      'Если у банка отзовут лицензию, вернут до 1,4 млн ₽ на одного человека в одном банке, включая проценты.',
+      'Поэтому крупные накопления разумно делить между несколькими банками. Для отдельных особых случаев лимит выше — подробности на asv.org.ru.',
+    ],
+    q: 'Сколько вернёт АСВ, если у банка отзовут лицензию?',
+    options: ['Всю сумму', 'До 1,4 млн ₽ на человека в одном банке', 'Ничего'], answer: 1,
+    why: 'Страховка — до 1,4 млн ₽ в одном банке. Больше — делите между банками.',
+  },
+]
+
 /** Разовое досрочное погашение: новые поля кредита и оценка эффекта для журнала. */
 function applyPrepayment(loan, amount, mode, date) {
   const s = loanState(loan, date)
@@ -1222,6 +1499,10 @@ function emptyState() {
     categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })),
     transactions: [],
     settings: { manualIncome: null, lastBackup: null },
+    // Игра «Копилка»: startDate = null — игра ещё не начата. days: { 'YYYY-MM-DD': копейки }.
+    game: { startDate: null, startAmount: kop(100), days: {}, deposited: 0 },
+    // Карточки: { [id]: { box, due } } — интервальное повторение.
+    learn: { cards: {}, newOn: null },
   }
 }
 
@@ -1236,10 +1517,13 @@ function migrate(raw) {
   for (const t of raw.transactions) {
     if (!Number.isInteger(t.amount) || t.amount < 0 || typeof t.date !== 'string') throw new Error('В копии есть повреждённая операция')
   }
+  const empty = emptyState()
   return {
-    ...emptyState(),
+    ...empty,
     ...raw,
-    settings: { ...emptyState().settings, ...(raw.settings || {}) },
+    settings: { ...empty.settings, ...(raw.settings || {}) },
+    game: { ...empty.game, ...(raw.game || {}) },
+    learn: { ...empty.learn, ...(raw.learn || {}) },
     version: SCHEMA_VERSION,
   }
 }
@@ -1758,6 +2042,7 @@ function renderScenarioResult() {
   box.innerHTML = '<div class="card sc-hero">' + hero + '</div>'
     + '<p class="card-title">Как банк пересчитает — выберите</p>'
     + '<div class="cmp">' + col('term') + col('payment') + '</div>'
+    + '<button class="link-btn" data-open-card="term-vs-payment">Не уверены? Карточка «Срок или платёж» →</button>'
     + '<p class="card-title">Остаток долга</p>'
     + '<div class="card chart-card">' + balanceChart(futures, today) + '<div class="legend">'
     + futures.map((f) => '<div><i style="background:' + (f.cls === 'base' ? 'var(--label-3)' : 'var(--accent)') + (f.cls === 'double' ? ';opacity:.45' : '') + '"></i>'
@@ -2151,6 +2436,220 @@ document.addEventListener('click', (e) => {
   if (row) openTxForm(row.dataset.tx)
 })
 
+/* ===== Экран «Копилка» ===== */
+function budgetFree(today) {
+  const b = budgetSummary(state, today)
+  return b.hasData || b.manualIncome ? b.free : null
+}
+
+function renderPiggy() {
+  const box = document.getElementById('piggy-main')
+  const g = state.game
+  const today = todayISO()
+
+  if (!g.startDate) {
+    box.innerHTML = '<div class="card help-intro"><div class="empty-icon">🐷</div>'
+      + '<h2>Копилка привычки</h2>'
+      + '<p>Каждый день откладывайте небольшую сумму и отмечайте здесь. Каждый новый месяц сумма растёт на 50% — но не больше, чем позволяет ваш бюджет.</p></div>'
+      + '<div class="group">'
+      + '<div class="row intro"><span>🗓 66 дней</span><span class="value">столько в среднем формируется привычка</span></div>'
+      + '<div class="row intro"><span>❄️ 2 заморозки</span><span class="value">в месяц пропуск прощается сам</span></div>'
+      + '<div class="row intro"><span>🏁 Цель</span><span class="value">копилку — в досрочку</span></div>'
+      + '</div><p class="footnote">Деньги приложение никуда не переводит. Откладывайте сами — лучше на отдельный накопительный счёт — и отмечайте здесь.</p>'
+      + '<button class="btn-primary" id="game-start">Начать со ' + fmtRub(g.startAmount) + ' в день</button>'
+    return
+  }
+
+  const free = budgetFree(today)
+  const t = dailyTarget(g, today, free)
+  const p = gameProgress(g, today)
+  const yesterday = addDaysISO(today, -1)
+  const comeback = !p.savedToday && p.missed.has(yesterday)
+
+  // Сегодня
+  let todayHTML = '<div class="card today-card">'
+  if (comeback) todayHTML += '<div class="comeback">С возвращением! Пропуски бывают у всех — главное вернуться. Путь привычки сохранён.</div>'
+  if (p.savedToday) {
+    todayHTML += '<div class="label">Сегодня</div><div class="done-big">✓ Отложено ' + fmtRub(g.days[today]) + '</div>'
+      + '<p class="caption">Отлично! Завтра — снова ' + fmtRub(dailyTarget(g, addDaysISO(today, 1), free).amount) + '.</p>'
+      + '<div class="row-links"><button class="link-btn" id="game-undo">Отменить</button></div>'
+  } else {
+    const growth = t.month === 0 ? 'первый месяц игры'
+      : 'месяц ' + (t.month + 1) + ' · +50% к прошлому'
+    todayHTML += '<div class="label">Отложить сегодня</div><div class="sum-big">' + fmtRub(t.amount) + '</div>'
+      + '<p class="caption">' + growth + (t.capped ? ' · это максимум по вашему бюджету (' + fmtRub(t.cap) + ' в день)' : '') + '</p>'
+      + '<button class="btn-primary" id="game-save">Отложил ✓</button>'
+      + '<div class="row-links"><button class="link-btn" id="game-other">Другая сумма</button><button class="link-btn" id="game-change">Изменить сумму дня</button></div>'
+  }
+  todayHTML += '</div>'
+
+  // Путь привычки: дни по порядку, пропуски не рисуем — путь не обнуляется.
+  const dots = []
+  for (let d = g.startDate; d <= today && dots.length < HABIT_DAYS; d = addDaysISO(d, 1)) {
+    if (g.days[d]) dots.push('s')
+    else if (p.frozen.has(d)) dots.push('f')
+  }
+  if (!p.savedToday && dots.length < HABIT_DAYS) dots.push('t')
+  while (dots.length < HABIT_DAYS) dots.push('')
+  const habitHTML = '<p class="card-title">Путь привычки</p><div class="card">'
+    + '<div class="loan-head"><span class="loan-name">' + p.habit + ' из ' + HABIT_DAYS + ' дней</span>'
+    + '<span class="badge">подряд: ' + p.streak + '</span></div>'
+    + '<div class="habit-dots" aria-hidden="true">' + dots.map((c) => '<i class="' + c + '"></i>').join('') + '</div>'
+    + '<div class="habit-legend"><span>🟢 отложено</span><span>❄️ заморозка</span><span>Заморозок в этом месяце: ' + p.freezesLeft + '</span></div>'
+    + (p.habit >= HABIT_DAYS ? '<p class="caption" style="margin-top:8px">🎉 66 дней пройдено — привычка сформирована. Продолжайте!</p>' : '')
+    + '</div>'
+
+  // Копилка
+  const lifetime = piggyTotal(g)
+  const inPiggy = Math.max(0, lifetime - g.deposited)
+  const lvl = piggyLevel(lifetime)
+  const loan = mainLoan()
+  const ls = loan ? loanState(loan, today) : null
+  let meaning = ''
+  if (inPiggy > 0 && ls && ls.balance > 0 && !ls.infinite) {
+    const c = compareScenario(ls.balance, loan, today, { lumpSum: Math.min(inPiggy, ls.balance) }).term
+    meaning = '<p class="caption">Если внести в ипотеку: экономия ≈ ' + fmtRub(c.interestSaved) + ' на процентах'
+      + (c.monthsSaved > 0 ? ' и закрытие на ' + fmtTerm(c.monthsSaved) + ' раньше' : '') + '.</p>'
+      + '<button class="btn-primary" id="game-deposit" style="margin-top:12px">Внести в досрочку</button>'
+  }
+  const toNext = lvl.next ? lvl.next[0] - lifetime : 0
+  const piggyHTML = '<p class="card-title">В копилке</p><div class="card">'
+    + '<div class="sum-big">' + fmtRub(inPiggy) + '</div>'
+    + '<div class="caption">Уровень ' + (lvl.index + 1) + ' · «' + lvl.name + '»' + (g.deposited ? ' · уже внесено в досрочку ' + fmtRub(g.deposited) : '') + '</div>'
+    + (lvl.next ? '<div class="bar"><span style="width:' + Math.round(((lifetime - PIGGY_LEVELS[lvl.index][0]) / (lvl.next[0] - PIGGY_LEVELS[lvl.index][0])) * 100) + '%"></span></div>'
+      + '<div class="caption">До уровня «' + lvl.next[1] + '» — ' + fmtRub(toNext) + '</div>' : '')
+    + meaning + '</div>'
+
+  box.innerHTML = todayHTML + habitHTML + piggyHTML
+}
+
+function renderLearn() {
+  const box = document.getElementById('learn-main')
+  const today = todayISO()
+  const learn = state.learn
+  const queue = cardsForToday(learn, LESSONS, today)
+  const mastered = LESSONS.filter((l) => cardMastered(learn.cards[l.id])).length
+  const head = queue.length
+    ? '<div class="card"><div class="caption">Карточка дня · минута чтения и один вопрос</div>'
+      + '<div class="loan-name" style="margin:6px 0 12px">' + escapeHTML(queue[0].title) + (learn.cards[queue[0].id] ? ' · повторение' : '') + '</div>'
+      + '<button class="btn-primary" data-open-card="' + queue[0].id + '">Открыть</button></div>'
+    : '<div class="card"><div class="loan-name">На сегодня всё 👍</div><p class="caption">Новая карточка откроется завтра. Повторения появятся сами, когда придёт их время.</p></div>'
+  const status = (l) => {
+    const c = learn.cards[l.id]
+    if (!c) return '<span class="st">новая</span>'
+    if (c.due <= today) return '<span class="st">пора повторить</span>'
+    return cardMastered(c) ? '<span class="st ok">✓ освоено</span>' : '<span class="st">изучаю</span>'
+  }
+  box.innerHTML = head
+    + '<p class="footnote">Освоено ' + mastered + ' из ' + LESSONS.length + ' · уровень «Финансист ' + mastered + '». Карточка освоена после двух верных ответов подряд.</p>'
+    + '<div class="group">' + LESSONS.map((l) => '<button class="row lesson-row" data-open-card="' + l.id + '"><span>' + escapeHTML(l.title) + '</span>' + status(l) + '</button>').join('') + '</div>'
+}
+
+/* --- Карточка: чтение, вопрос, ответ --- */
+let openCardId = null
+function openCard(id) {
+  const l = LESSONS.find((x) => x.id === id)
+  if (!l) return
+  openCardId = id
+  document.getElementById('card-title').textContent = l.title
+  document.getElementById('card-body').innerHTML = '<div class="card card-text">' + l.text.map((t) => '<p>' + escapeHTML(t) + '</p>').join('') + '</div>'
+    + '<p class="quiz-q">' + escapeHTML(l.q) + '</p>'
+    + l.options.map((o, i) => '<button class="quiz-opt" data-answer="' + i + '">' + escapeHTML(o) + '</button>').join('')
+    + '<div id="quiz-result"></div>'
+  closeSheet()
+  openSheet('sheet-card')
+}
+
+document.getElementById('card-body').addEventListener('click', (e) => {
+  const opt = e.target.closest('[data-answer]')
+  if (opt) {
+    const l = LESSONS.find((x) => x.id === openCardId)
+    const today = todayISO()
+    const chosen = Number(opt.dataset.answer)
+    const correct = chosen === l.answer
+    const wasNew = !state.learn.cards[l.id]
+    // В расписание идёт только ответ на карточку, которую пора показывать; тренировка заранее его не сбивает.
+    const card = state.learn.cards[l.id]
+    if (!card || card.due <= today) {
+      state.learn.cards[l.id] = reviewCard(card, correct, today)
+      if (wasNew) state.learn.newOn = today
+      save()
+    }
+    for (const b of document.querySelectorAll('[data-answer]')) {
+      b.disabled = true
+      const i = Number(b.dataset.answer)
+      if (i === l.answer) b.classList.add('right')
+      else if (i === chosen) b.classList.add('wrong')
+    }
+    const next = cardsForToday(state.learn, LESSONS, today)[0]
+    document.getElementById('quiz-result').innerHTML = '<p class="quiz-why"><b>' + (correct ? 'Верно! ' : 'Не совсем. ') + '</b>' + escapeHTML(l.why)
+      + (correct ? '' : ' Карточка вернётся завтра.') + '</p>'
+      + (next ? '<button class="btn-primary" data-open-card="' + next.id + '">Следующая карточка</button>' : '<button class="btn-primary" data-close-sheet>Готово</button>')
+    renderLearn()
+    return
+  }
+})
+
+document.addEventListener('click', (e) => {
+  const c = e.target.closest('[data-open-card]')
+  if (c) openCard(c.dataset.openCard)
+})
+
+/* --- Действия игры --- */
+function markSaved(amount) {
+  const today = todayISO()
+  state.game.days[today] = amount
+  save()
+  renderPiggy()
+  const coin = document.createElement('div')
+  coin.className = 'coin'
+  coin.textContent = '₽'
+  document.body.appendChild(coin)
+  setTimeout(() => coin.remove(), 1000)
+  const p = gameProgress(state.game, today)
+  toast(p.habit === HABIT_DAYS ? '66 дней! Привычка сформирована 🎉' : 'В копилке +' + fmtRub(amount) + ' · подряд ' + p.streak + ' ' + plural(p.streak, 'день', 'дня', 'дней'))
+}
+
+document.getElementById('piggy-main').addEventListener('click', (e) => {
+  const id = e.target.closest('button')?.id
+  const today = todayISO()
+  if (id === 'game-start') {
+    state.game.startDate = today
+    save()
+    renderPiggy()
+    toast('Игра началась! Первый шаг — отложить сегодня')
+  } else if (id === 'game-save') {
+    markSaved(dailyTarget(state.game, today, budgetFree(today)).amount)
+  } else if (id === 'game-other') {
+    const v = parseMoney(prompt('Сколько отложили сегодня, ₽?', '') || '')
+    if (v && v > 0) markSaved(v)
+  } else if (id === 'game-change') {
+    const t = dailyTarget(state.game, today, budgetFree(today))
+    const v = parseMoney(prompt('Сумма дня сейчас: ' + rubFmt.format(t.amount / 100) + ' ₽. Новая сумма, ₽:', '') || '')
+    if (!v || v <= 0) return
+    // Пересчитываем стартовую сумму так, чтобы сегодня получилась новая; рост +50% продолжится от неё.
+    state.game.startAmount = Math.max(kop(10), Math.round(v / Math.pow(1 + GAME_GROWTH, t.month)))
+    save()
+    renderPiggy()
+    toast('Сумма дня изменена — без штрафа')
+  } else if (id === 'game-undo') {
+    delete state.game.days[today]
+    save()
+    renderPiggy()
+  } else if (id === 'game-deposit') {
+    const loan = mainLoan()
+    const inPiggy = piggyTotal(state.game) - state.game.deposited
+    const { loan: updated, entry } = applyPrepayment(loan, inPiggy, 'term', today)
+    if (!confirm('Внести ' + fmtRubExact(entry.amount) + ' из копилки досрочно в «' + loan.name + '»?\n\nРежим: уменьшить срок. Запишите, когда деньги уже внесены в банк.')) return
+    state.loans = state.loans.map((l) => (l.id === loan.id ? updated : l))
+    state.prepayments.push({ id: uid(), ...entry })
+    state.game.deposited += entry.amount
+    save()
+    renderAll()
+    toast('Копилка внесена! Экономия ≈ ' + fmtRub(entry.interestSaved))
+  }
+})
+
 /* ===== Встроенные тесты (index.html#test) =====
    Проверяют расчётное ядро без каких-либо инструментов: открыть адрес и посмотреть на галочки. */
 const TESTS = []
@@ -2369,6 +2868,53 @@ test('Подсказка про свободную сумму: округляе�
 })
 test('Нет данных — нет подсказок', () => eq(buildHints(tBudget([]), '2026-10-20').length, 0))
 
+// --- Игра «Копилка» ---
+const T_GAME = (days = {}) => ({ startDate: '2026-01-01', startAmount: kop(100), days, deposited: 0 })
+test('Сумма дня: 100 → 150 → 230 ₽ (+50% в месяц, до 10 ₽)', () => {
+  eq(dailyTarget(T_GAME(), '2026-01-15', null).amount, kop(100))
+  eq(dailyTarget(T_GAME(), '2026-02-01', null).amount, kop(150))
+  eq(dailyTarget(T_GAME(), '2026-03-31', null).amount, kop(230))
+})
+test('Потолок: при «свободно» 44 113 ₽ сумма дня не выше 1 470 ₽', () => {
+  const free = kop(44113)
+  eq(dailyTarget(T_GAME(), '2026-07-10', free).amount, kop(1140))   // 7-й месяц: 1 139 → 1 140, ниже потолка
+  const t = dailyTarget(T_GAME(), '2026-08-10', free)               // 8-й месяц: 1 709 → потолок
+  eq(t.amount, kop(1470)); eq(t.capped, true)
+})
+test('Бюджет в минусе — сумма дня не растёт', () => {
+  eq(dailyTarget(T_GAME(), '2026-06-10', kop(-5000)).amount, kop(100))
+})
+test('Один пропуск закрывается заморозкой — серия не рвётся', () => {
+  const p = gameProgress(T_GAME({ '2026-01-01': 1, '2026-01-02': 1, '2026-01-04': 1 }), '2026-01-05')
+  eq(p.frozen.size, 1); eq(p.missed.size, 0); eq(p.streak, 4); eq(p.habit, 4)
+})
+test('Третий пропуск в месяце рвёт серию, но путь привычки не обнуляется', () => {
+  const days = {}
+  for (const d of ['01', '05', '06']) days['2026-01-' + d] = 1
+  const p = gameProgress(T_GAME(days), '2026-01-07')
+  // 02, 03 — заморозки, 04 — пропуск
+  eq(p.frozen.size, 2); eq(p.missed.size, 1); eq(p.streak, 2); eq(p.habit, 5)
+})
+test('Заморозки обновляются каждый месяц', () => {
+  const p = gameProgress(T_GAME({ '2026-01-31': 1, '2026-02-03': 1 }), '2026-02-04')
+  // январь: 29 пропусков → 2 заморозки; февраль: 01, 02 → обе заморозки
+  eq(p.frozen.size, 4); eq(p.streak, 4)
+})
+test('Уровни копилки: 0 → «Первая монетка», 10 000 ₽ → «Десятка»', () => {
+  eq(piggyLevel(0).name, 'Первая монетка'); eq(piggyLevel(kop(10000)).name, 'Десятка'); eq(piggyLevel(kop(9999)).name, 'Хорошее начало')
+})
+test('Повторение: верно → 1 день, ещё раз верно → 3 дня; ошибка → завтра', () => {
+  const a = reviewCard(null, true, '2026-01-01'); eq(a.box, 0); eq(a.due, '2026-01-02')
+  const b = reviewCard(a, true, '2026-01-02'); eq(b.box, 1); eq(b.due, '2026-01-05'); eq(cardMastered(b), true)
+  const c = reviewCard(b, false, '2026-01-05'); eq(c.box, 0); eq(c.due, '2026-01-06')
+})
+test('Карточки на сегодня: повторения + одна новая; вторая новая — только завтра', () => {
+  const lessons = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
+  const learn = { cards: { a: { box: 0, due: '2026-01-02' } }, newOn: null }
+  eq(cardsForToday(learn, lessons, '2026-01-02').map((l) => l.id).join(), 'a,b')
+  eq(cardsForToday({ ...learn, newOn: '2026-01-02' }, lessons, '2026-01-02').map((l) => l.id).join(), 'a')
+})
+
 test('Ввод суммы: «5 380 000,50» → 538 000 050 коп.', () => eq(parseMoney('5 380 000,50'), 538000050))
 test('Ввод суммы: мусор → пусто', () => { eq(parseMoney('abc'), null); eq(parseMoney('12,345'), null); eq(parseMoney(''), null) })
 test('Срок словами: 204 мес → «17 лет», 15 мес → «1 год 3 мес»', () => { eq(fmtTerm(204), '17 лет'); eq(fmtTerm(15), '1 год 3 мес') })
@@ -2423,12 +2969,14 @@ function renderAll() {
   renderHome()
   renderScenarios()
   renderMoney()
+  renderPiggy()
+  renderLearn()
 }
 
 /* ===== Навигация по вкладкам =====
    Текущая вкладка хранится в адресе (#home, #loans…), чтобы работала кнопка «назад»
    и перезагрузка открывала тот же экран. */
-const TABS = ['home', 'loans', 'scenarios', 'money']
+const TABS = ['home', 'loans', 'scenarios', 'piggy', 'money']
 
 function showTab(name) {
   closeSheet()
