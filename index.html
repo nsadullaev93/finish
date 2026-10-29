@@ -274,6 +274,38 @@ body.sheet-open { overflow: hidden; }
 .preview { text-align: center; padding: 14px 16px; margin-bottom: 16px; }
 .preview .big { font-size: 28px; margin-top: 2px; }
 
+/* ===== Главная ===== */
+.hero { text-align: center; padding: 24px 16px 22px; }
+.hero .label { font-size: 15px; color: var(--label-2); }
+.hero .date { font-size: 44px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.1; margin: 6px 0 6px; }
+.hero .sub { font-size: 15px; color: var(--label-2); }
+.progress-card { display: flex; align-items: center; gap: 20px; }
+.ring { position: relative; flex: none; width: 128px; height: 128px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 14; }
+.ring .track { stroke: var(--fill); }
+.ring .value { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 0.8s ease-out; }
+@media (prefers-reduced-motion: reduce) { .ring .value { transition: none; } }
+.ring-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring-center b { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+.ring-center span { font-size: 12px; color: var(--label-2); }
+.stats { flex: 1; min-width: 0; display: grid; gap: 12px; }
+.stat b { display: block; font-size: 19px; font-weight: 600; letter-spacing: -0.2px; white-space: nowrap; }
+.stat span { font-size: 13px; color: var(--label-2); }
+.stat.paid b { color: var(--accent); }
+.mini { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; }
+.mini:active { opacity: 0.7; }
+.mini-main { flex: 1; min-width: 0; }
+.mini-top { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; }
+.mini-top b { font-weight: 600; }
+.mini .bar { margin: 8px 0 4px; height: 4px; }
+@media (max-width: 350px) {
+  .hero .date { font-size: 38px; }
+  .ring { width: 108px; height: 108px; }
+  .ring-center b { font-size: 24px; }
+  .stat b { font-size: 17px; }
+}
+
 /* ===== Тесты ===== */
 .test-row { font-size: 15px; align-items: flex-start; }
 .test-row small { color: var(--red); font-size: 13px; }
@@ -287,21 +319,13 @@ body.sheet-open { overflow: hidden; }
   <!-- Главная -->
   <section class="screen" id="screen-home" aria-labelledby="t-home">
     <h1 class="large-title" id="t-home">Главная</h1>
-    <div class="card empty">
+    <div class="card empty" id="home-empty">
       <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg></div>
       <h2>Путь к финишу</h2>
-      <p>Здесь появится год, когда ипотека будет закрыта, и ваш прогресс.</p>
+      <p>Добавьте ипотеку — и здесь появится год, когда вы её закроете, и ваш прогресс.</p>
+      <button class="btn-primary" data-add-loan>Добавить кредит</button>
     </div>
-    <p class="card-title">Что здесь будет</p>
-    <div class="card">
-      <ul class="list">
-        <li><span class="dot"></span>Месяц и год закрытия ипотеки</li>
-        <li><span class="dot"></span>Кольцо прогресса</li>
-        <li><span class="dot"></span>Выплачено, осталось, проценты впереди</li>
-        <li><span class="dot"></span>Сколько свободно в этом месяце</li>
-        <li><span class="dot"></span>Подсказка</li>
-      </ul>
-    </div>
+    <div id="home-main"></div>
   </section>
 
   <!-- Кредиты -->
@@ -511,6 +535,11 @@ function fmtMonthYear(d) {
   const m = MONTHS[d.getMonth()]
   return m[0].toUpperCase() + m.slice(1) + ' ' + d.getFullYear()
 }
+const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+function fmtDayMonth(d) { return d.getDate() + ' ' + MONTHS_GEN[d.getMonth()] }
+
+/** Процент выплаченного вниз до целого: 99,6% — ещё не 100%. */
+function pct(progress) { return Math.floor(progress * 100) }
 
 function escapeHTML(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
@@ -932,15 +961,15 @@ function renderLoans() {
   document.getElementById('loans-note').hidden = state.loans.length === 0
   list.innerHTML = sortedLoans().map((loan) => {
     const s = loanState(loan, today)
-    const pct = Math.round(s.progress * 100)
+    const p = pct(s.progress)
     const closed = s.balance <= 0
     return '<button class="card loan-card" data-loan="' + loan.id + '">'
       + '<div class="loan-head"><span class="loan-name">' + escapeHTML(loan.name) + '</span>'
       + '<span class="badge">' + String(loan.rate).replace('.', ',') + '%</span></div>'
       + '<div class="big">' + (closed ? 'Закрыт' : fmtRub(s.balance)) + '</div>'
       + '<div class="caption">' + (closed ? 'долг полностью выплачен' : 'остаток долга') + '</div>'
-      + '<div class="bar"><span style="width:' + pct + '%"></span></div>'
-      + '<div class="caption">Выплачено ' + pct + '% · ' + fmtRub(s.paid) + ' из ' + fmtRub(loan.originalAmount) + '</div>'
+      + '<div class="bar"><span style="width:' + p + '%"></span></div>'
+      + '<div class="caption">Выплачено ' + p + '% · ' + fmtRub(s.paid) + ' из ' + fmtRub(loan.originalAmount) + '</div>'
       + (closed ? '' : '<div class="meta">'
         + '<div><b>' + fmtRubExact(loan.payment) + '</b><span>платёж, ' + loan.payDay + '-го</span></div>'
         + '<div><b>' + fmtTerm(s.monthsLeft) + '</b><span>осталось</span></div>'
@@ -949,6 +978,73 @@ function renderLoans() {
       + (s.infinite ? '<p class="warn">Платёж не покрывает проценты — долг не уменьшается. Проверьте ставку и платёж.</p>' : '')
       + '</button>'
   }).join('')
+}
+
+/* ===== Главная ===== */
+
+/** Главный кредит — ипотека; если её нет, самый крупный из остальных. */
+function mainLoan() {
+  return sortedLoans()[0] || null
+}
+
+const RING_R = 57
+const RING_C = 2 * Math.PI * RING_R
+
+function renderHome() {
+  const main = document.getElementById('home-main')
+  const loan = mainLoan()
+  document.getElementById('home-empty').hidden = !!loan
+  if (!loan) { main.innerHTML = ''; return }
+
+  const today = todayISO()
+  const s = loanState(loan, today)
+  const closed = s.balance <= 0
+  const p = pct(s.progress)
+  const what = loan.kind === 'mortgage' ? 'Ипотека' : escapeHTML(loan.name)
+
+  let hero
+  if (closed) {
+    hero = '<div class="label">' + what + '</div><div class="date">Закрыта</div><div class="sub">Долг полностью выплачен</div>'
+  } else if (s.infinite) {
+    hero = '<div class="label">' + what + '</div><div class="date">—</div>'
+      + '<p class="warn">Платёж не покрывает проценты — долг не уменьшается. Проверьте ставку и платёж в разделе «Кредиты».</p>'
+  } else {
+    hero = '<div class="label">' + what + ' закроется</div>'
+      + '<div class="date">' + fmtMonthYear(s.payoffDate) + '</div>'
+      + '<div class="sub">через ' + fmtTerm(s.monthsLeft) + ' · следующий платёж ' + fmtDayMonth(s.nextPayment) + '</div>'
+  }
+
+  const others = sortedLoans().slice(1).map((l) => {
+    const o = loanState(l, today)
+    const done = o.balance <= 0
+    return '<button class="card mini" data-loan="' + l.id + '"><div class="mini-main">'
+      + '<div class="mini-top"><b>' + escapeHTML(l.name) + '</b><span>' + (done ? 'Закрыт' : fmtRub(o.balance)) + '</span></div>'
+      + '<div class="bar"><span style="width:' + pct(o.progress) + '%"></span></div>'
+      + '<div class="caption">' + (done ? 'Долг выплачен'
+        : o.infinite ? 'Платёж не покрывает проценты'
+        : 'Закроется: ' + fmtMonthYear(o.payoffDate) + ' · выплачено ' + pct(o.progress) + '%') + '</div>'
+      + '</div></button>'
+  }).join('')
+
+  main.innerHTML =
+    '<div class="card hero">' + hero + '</div>'
+    + '<div class="card progress-card">'
+    + '<div class="ring" role="img" aria-label="Выплачено ' + p + '%">'
+    + '<svg viewBox="0 0 128 128"><circle class="track" cx="64" cy="64" r="' + RING_R + '"/>'
+    + '<circle class="value" cx="64" cy="64" r="' + RING_R + '" stroke-dasharray="' + RING_C + '" stroke-dashoffset="' + RING_C + '"/></svg>'
+    + '<div class="ring-center"><b>' + p + '%</b><span>выплачено</span></div></div>'
+    + '<div class="stats">'
+    + '<div class="stat paid"><b>' + fmtRub(s.paid) + '</b><span>выплачено</span></div>'
+    + '<div class="stat"><b>' + fmtRub(s.balance) + '</b><span>осталось</span></div>'
+    + '<div class="stat"><b>' + (s.infinite ? '—' : fmtRub(s.interestLeft)) + '</b><span>проценты впереди</span></div>'
+    + '</div></div>'
+    + (others ? '<p class="card-title">Другие кредиты</p>' + others : '')
+
+  // Кольцо «дорисовывается» от нуля — после того как браузер отрисовал начальное состояние.
+  const arc = main.querySelector('.ring .value')
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    arc.style.strokeDashoffset = String(RING_C * (1 - s.progress))
+  }))
 }
 
 /* --- Форма кредита --- */
@@ -1148,6 +1244,7 @@ function renderTests() {
 function renderAll() {
   renderSettings()
   renderLoans()
+  renderHome()
 }
 
 /* ===== Навигация по вкладкам =====
