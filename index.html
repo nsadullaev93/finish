@@ -410,6 +410,15 @@ body.sheet-open { overflow: hidden; }
 .bar > span.over { background: var(--red); }
 .free-card .link-btn { margin-top: 6px; display: block; }
 
+/* ===== Подсказки ===== */
+.hint { padding: 14px 16px 6px; margin-bottom: 8px; }
+.hint-body { display: flex; gap: 12px; align-items: flex-start; }
+.hint-ic { font-size: 22px; line-height: 1.2; flex: none; }
+.hint-body p { font-size: 15px; line-height: 1.4; }
+.hint-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-left: 34px; }
+.hint-actions .link-btn { margin-top: 0; text-align: left; }
+.hint-hide { color: var(--label-2) !important; flex: none; }
+
 /* ===== Как пользоваться ===== */
 .help-intro { text-align: center; padding: 24px 20px; }
 .help-intro h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
@@ -1075,6 +1084,87 @@ function budgetSummary(data, today) {
   }
 }
 
+/* ===== Подсказки: простые правила =====
+   Каждая подсказка — короткий текст с конкретной цифрой и необязательное действие.
+   id включает месяц: скрытая подсказка вернётся в следующем месяце, если правило снова сработает. */
+const HINT_OVER_SHARE = 0.25
+const HINT_OVER_MIN = kop(2000)
+
+/** Главный кредит для подсказок: ипотека, иначе самый крупный. */
+function hintLoan(loans) {
+  const order = { mortgage: 0, consumer: 1, other: 2 }
+  return [...loans].sort((a, b) => order[a.kind] - order[b.kind] || b.balance - a.balance)[0] || null
+}
+
+function buildHints(data, today) {
+  const key = monthKey(today)
+  const b = budgetSummary(data, today)
+  const cur = monthTotals(data.transactions, data.categories, key)
+  const cat = Object.fromEntries(data.categories.map((c) => [c.id, c]))
+  const loan = hintLoan(data.loans)
+  const ls = loan ? loanState(loan, today) : null
+  const canModel = ls && ls.balance > 0 && !ls.infinite
+  const loanWord = loan && loan.kind === 'mortgage' ? 'ипотека' : loan ? '«' + loan.name + '»' : ''
+  const round1000 = (k) => Math.floor(k / kop(1000)) * kop(1000)
+  const hints = []
+
+  // 4. Премия в этом или прошлом месяце — предложить внести её целиком.
+  if (canModel) {
+    const since = shiftMonth(key, -1)
+    const bonuses = data.transactions.filter((t) => t.type === 'income' && !cat[t.categoryId]?.regular && monthKey(t.date) >= since)
+    const bonus = bonuses.reduce((a, t) => a + t.amount, 0)
+    if (bonus > 0) {
+      const lump = Math.min(bonus, ls.balance)
+      const c = compareScenario(ls.balance, loan, today, { lumpSum: lump })
+      hints.push({
+        id: 'bonus-' + key, priority: 4, icon: '🎁',
+        text: 'Недавно пришла премия ' + fmtRub(bonus) + '. Если внести её целиком, ' + loanWord + ' закроется на '
+          + fmtTerm(c.term.monthsSaved) + ' раньше, а на процентах вы сэкономите ' + fmtRub(c.term.interestSaved) + '.',
+        action: { label: 'Посмотреть сценарий', kind: 'lump', amount: lump },
+      })
+    }
+  }
+
+  // 1. Категории заметно выше обычного.
+  for (const [id, spent] of Object.entries(cur.byCategory)) {
+    const usual = b.typical[id]
+    if (!usual || !b.precise) continue
+    const over = spent - usual
+    if (spent > usual * (1 + HINT_OVER_SHARE) && over >= HINT_OVER_MIN) {
+      hints.push({
+        id: 'over-' + id + '-' + key, priority: 3 + over / 1e12, icon: cat[id]?.icon || '•',
+        text: 'На «' + (cat[id]?.name || id) + '» в этом месяце ушло ' + fmtRub(spent) + ', обычно около ' + fmtRub(usual)
+          + '. Это на ' + fmtRub(over) + ' больше.',
+        action: canModel && round1000(over) > 0 ? { label: 'Что даст +' + fmtShortRub(round1000(over)) + ' в месяц', kind: 'monthly', amount: round1000(over) } : null,
+      })
+    }
+  }
+
+  // 3. Свободная сумма и на сколько она приближает закрытие.
+  if (canModel && (b.hasData || b.manualIncome) && round1000(b.free) > 0) {
+    const extra = round1000(b.free)
+    const c = compareScenario(ls.balance, loan, today, { extraMonthly: extra })
+    hints.push({
+      id: 'free-' + key, priority: 2, icon: '💡',
+      text: 'Обычно у вас остаётся до ' + fmtRub(b.free) + ' в месяц. Если добавлять к платежу ' + fmtRub(extra) + ', '
+        + loanWord + ' закроется на ' + fmtTerm(c.term.monthsSaved) + ' раньше — в ' + fmtMonthYearPrep(c.term.payoffDate) + '.',
+      action: { label: 'Посмотреть сценарий', kind: 'monthly', amount: extra },
+    })
+  }
+
+  // 2. Подписки: в месяц и за год.
+  const subs = b.typical.subs || cur.byCategory.subs || 0
+  if (subs > 0) {
+    hints.push({
+      id: 'subs-' + key, priority: 1, icon: cat.subs?.icon || '🔁',
+      text: 'Подписки — ' + fmtRub(subs) + ' в месяц, это ' + fmtRub(subs * 12) + ' в год. Проверьте, всеми ли вы пользуетесь.',
+      action: null,
+    })
+  }
+
+  return hints.sort((a, c) => c.priority - a.priority)
+}
+
 /** Разовое досрочное погашение: новые поля кредита и оценка эффекта для журнала. */
 function applyPrepayment(loan, amount, mode, date) {
   const s = loanState(loan, date)
@@ -1443,6 +1533,7 @@ function renderHome() {
   const closed = s.balance <= 0
   const p = pct(s.progress)
   const what = loan.kind === 'mortgage' ? 'Ипотека' : escapeHTML(loan.name)
+  const hint = visibleHints(today)[0]
 
   let hero
   if (closed) {
@@ -1481,6 +1572,7 @@ function renderHome() {
     + '<div class="stat"><b>' + (s.infinite ? '—' : fmtRub(s.interestLeft)) + '</b><span>проценты впереди</span></div>'
     + '</div></div>'
     + freeCard(today)
+    + (hint ? '<p class="card-title">Подсказка</p>' + hintCard(hint) : '')
     + (others ? '<p class="card-title">Другие кредиты</p>' + others : '')
 
   // Кольцо «дорисовывается» от нуля — после того как браузер отрисовал начальное состояние.
@@ -1516,6 +1608,46 @@ function freeCard(today) {
     + (suggest > 0 ? '<button class="link-btn" data-try-extra="' + suggest + '">Что даст +' + fmtShortRub(suggest) + ' в месяц →</button>' : '')
     + '</div>'
 }
+
+/* --- Подсказки в интерфейсе ---
+   Скрытые подсказки помним только на этом телефоне: это удобство, а не данные. */
+const HIDDEN_HINTS_KEY = 'finish.hiddenHints'
+function hiddenHints() {
+  try { return new Set(JSON.parse(localStorage.getItem(HIDDEN_HINTS_KEY) || '[]')) } catch (e) { return new Set() }
+}
+function visibleHints(today) {
+  const hidden = hiddenHints()
+  return buildHints(state, today).filter((h) => !hidden.has(h.id))
+}
+function hintCard(h) {
+  return '<div class="card hint"><div class="hint-body"><span class="hint-ic" aria-hidden="true">' + h.icon + '</span>'
+    + '<p>' + escapeHTML(h.text) + '</p></div><div class="hint-actions">'
+    + (h.action ? '<button class="link-btn" data-hint-kind="' + h.action.kind + '" data-hint-amount="' + h.action.amount + '">' + escapeHTML(h.action.label) + '</button>' : '<span></span>')
+    + '<button class="link-btn hint-hide" data-hint-hide="' + h.id + '">Скрыть</button></div></div>'
+}
+
+document.addEventListener('click', (e) => {
+  const act = e.target.closest('[data-hint-kind]')
+  if (act) {
+    sc.kind = act.dataset.hintKind
+    sc.amount[sc.kind] = Number(act.dataset.hintAmount)
+    sc.loanId = mainLoan()?.id || null
+    renderScenarios()
+    location.hash = 'scenarios'
+    return
+  }
+  const hide = e.target.closest('[data-hint-hide]')
+  if (hide) {
+    const set = hiddenHints()
+    set.add(hide.dataset.hintHide)
+    // Храним только подсказки текущего и прошлого месяца — старые больше не появятся.
+    const keep = [...set].filter((id) => id.slice(-7) >= shiftMonth(monthKey(todayISO()), -1))
+    try { localStorage.setItem(HIDDEN_HINTS_KEY, JSON.stringify(keep)) } catch (err) { /* не страшно */ }
+    renderHome()
+    renderMoney()
+    toast('Подсказка скрыта до следующего месяца')
+  }
+})
 
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-try-extra]')
@@ -1981,7 +2113,10 @@ function renderMoney() {
   for (const x of txs) (byDay[x.date] ||= []).push(x)
   const days = Object.keys(byDay).sort().reverse()
 
-  main.innerHTML = '<div class="card">'
+  const hints = moneyMonth === current ? visibleHints(today) : []
+
+  main.innerHTML = (hints.length ? '<p class="card-title">Подсказки</p>' + hints.map(hintCard).join('') : '')
+    + '<p class="card-title">Итог месяца</p><div class="card">'
     + '<div class="caption">Осталось за месяц</div>'
     + '<div class="sum-big' + (left < 0 ? ' neg' : '') + '">' + (left < 0 ? '−' : '') + fmtRub(Math.abs(left)) + '</div>'
     + '<div class="sum-lines">'
@@ -2194,6 +2329,45 @@ test('Сумма по категориям сходится с итогом ме
   const t = monthTotals(tBudget([['2026-09', 'food', 100], ['2026-09', 'cafe', 50.5], ['2026-09', 'food', 20], ['2026-08', 'food', 999]]).transactions, T_CATS, '2026-09')
   eq(Object.values(t.byCategory).reduce((a, b) => a + b, 0), t.expense); eq(t.expense, kop(170.5))
 })
+
+// --- Подсказки ---
+function tHintData(currentCafe, extraRows = [], loans = []) {
+  const rows = []
+  for (const m of ['2026-07', '2026-08', '2026-09']) rows.push([m, 'salary', 150000], [m, 'cafe', 6000], [m, 'food', 30000])
+  rows.push(['2026-10', 'cafe', currentCafe], ...extraRows)
+  return tBudget(rows, { loans })
+}
+const T_MORTGAGE = { id: 'm', name: 'Ипотека', kind: 'mortgage', originalAmount: kop(3e6), balance: kop(2e6), balanceDate: '2026-10-01', rate: 10, payment: kop(30000), payDay: 15 }
+const hintIds = (d) => buildHints(d, '2026-10-20').map((h) => h.id.split('-')[0])
+test('Подсказка «выше обычного»: кафе 9 000 при норме 6 000 → есть', () => {
+  const h = buildHints(tHintData(9000), '2026-10-20').find((x) => x.id.startsWith('over-cafe'))
+  if (!h) throw new Error('нет подсказки')
+  if (!h.text.includes('9 000') || !h.text.includes('6 000')) throw new Error(h.text)
+})
+test('Подсказка «выше обычного» молчит: +30%, но меньше 2 000 ₽', () => {
+  // норма 6 000 → 7 800 = +30%, но разница 1 800 ₽
+  eq(hintIds(tHintData(7800)).includes('over'), false)
+})
+test('Подсказка «выше обычного» молчит: +20% (меньше порога 25%)', () => {
+  eq(buildHints(tBudget([
+    ['2026-07', 'food', 30000], ['2026-08', 'food', 30000], ['2026-09', 'food', 30000], ['2026-10', 'food', 36000],
+  ]), '2026-10-20').some((h) => h.id.startsWith('over')), false)
+})
+test('Подсказка про подписки: 1 490 ₽ → 17 880 ₽ в год', () => {
+  const h = buildHints(tHintData(6000, [['2026-07', 'subs', 1490], ['2026-08', 'subs', 1490], ['2026-09', 'subs', 1490]]), '2026-10-20').find((x) => x.id.startsWith('subs'))
+  if (!h || !h.text.includes('17 880')) throw new Error(h ? h.text : 'нет подсказки')
+})
+test('Подсказка про премию: есть премия и ипотека → совет внести, срок короче', () => {
+  const h = buildHints(tHintData(6000, [['2026-10', 'bonus', 100000]], [T_MORTGAGE]), '2026-10-20')[0]
+  if (!h.id.startsWith('bonus')) throw new Error('первой идёт ' + h.id)
+  eq(h.action.amount, kop(100000))
+})
+test('Подсказка про свободную сумму: округляет вниз до тысячи', () => {
+  // доход 150 000 − ипотека 30 000 − траты 36 000 = 84 000
+  const h = buildHints(tHintData(6000, [], [T_MORTGAGE]), '2026-10-20').find((x) => x.id.startsWith('free'))
+  eq(h.action.amount, kop(84000))
+})
+test('Нет данных — нет подсказок', () => eq(buildHints(tBudget([]), '2026-10-20').length, 0))
 
 test('Ввод суммы: «5 380 000,50» → 538 000 050 коп.', () => eq(parseMoney('5 380 000,50'), 538000050))
 test('Ввод суммы: мусор → пусто', () => { eq(parseMoney('abc'), null); eq(parseMoney('12,345'), null); eq(parseMoney(''), null) })
