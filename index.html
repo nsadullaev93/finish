@@ -44,10 +44,14 @@
   --radius: 14px;
   --side: 16px;
   /* SF Pro Rounded для крупных чисел — как в «Фитнесе» и Wallet */
+  /* Отступы от краёв экрана. Внутри Telegram к ним добавляются его панели (см. applyTelegramInsets). */
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
   --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
+/* Тёмная тема: по настройке системы, если тема не задана явно (Telegram задаёт её через data-theme) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #000000;
     --card: #1c1c1e;
     --label: #ffffff;
@@ -67,6 +71,26 @@
     --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
     --tab-pill: rgba(120, 120, 128, 0.3);
   }
+}
+:root[data-theme="dark"] {
+  --bg: #000000;
+  --card: #1c1c1e;
+  --label: #ffffff;
+  --label-2: rgba(235, 235, 245, 0.6);
+  --label-3: rgba(235, 235, 245, 0.3);
+  --separator: rgba(84, 84, 88, 0.6);
+  --fill: rgba(120, 120, 128, 0.24);
+  --accent: #30d158;
+  --accent-soft: rgba(48, 209, 88, 0.18);
+  --red: #ff453a;
+  --blue: #0a84ff;
+  --bar: rgba(22, 22, 23, 0.86);
+  --seg-on: #636366;
+  --glass: rgba(44, 44, 46, 0.58);
+  --glass-solid: #1c1c1e;
+  --glass-edge: rgba(255, 255, 255, 0.16);
+  --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --tab-pill: rgba(120, 120, 128, 0.3);
 }
 
 /* ===== База ===== */
@@ -88,8 +112,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   margin: 0 auto;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: env(safe-area-inset-top) calc(var(--side) + env(safe-area-inset-right))
-           calc(var(--tab-h) + var(--tab-gap) + env(safe-area-inset-bottom) + 28px) calc(var(--side) + env(safe-area-inset-left));
+  padding: var(--safe-top) calc(var(--side) + env(safe-area-inset-right))
+           calc(var(--tab-h) + var(--tab-gap) + var(--safe-bottom) + 28px) calc(var(--side) + env(safe-area-inset-left));
 }
 
 /* Крупные числа — скруглённым шрифтом */
@@ -151,7 +175,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    При прокрутке вниз сжимается до значков, при прокрутке вверх — возвращается. */
 .tabbar {
   position: fixed;
-  left: 50%; bottom: calc(env(safe-area-inset-bottom) + var(--tab-gap));
+  left: 50%; bottom: calc(var(--safe-bottom) + var(--tab-gap));
   z-index: 10;
   width: min(calc(100% - 24px), 440px);
   transform: translateX(-50%);
@@ -241,12 +265,12 @@ button.row:active { background: var(--fill); }
 .sheet {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 21;
   max-width: 480px; margin: 0 auto;
-  max-height: calc(100dvh - env(safe-area-inset-top) - 24px);
+  max-height: calc(100dvh - var(--safe-top) - 24px);
   overflow-y: auto;
   overscroll-behavior: contain;
   background: var(--bg);
   border-radius: 12px 12px 0 0;
-  padding: 0 var(--side) calc(24px + env(safe-area-inset-bottom));
+  padding: 0 var(--side) calc(24px + var(--safe-bottom));
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
   visibility: hidden;
@@ -268,7 +292,7 @@ body.sheet-open { overflow: hidden; }
 /* ===== Всплывающее сообщение ===== */
 .toast {
   position: fixed; left: 50%; z-index: 30;
-  bottom: calc(var(--tab-h) + var(--tab-gap) + env(safe-area-inset-bottom) + 14px);
+  bottom: calc(var(--tab-h) + var(--tab-gap) + var(--safe-bottom) + 14px);
   transform: translate(-50%, 20px);
   max-width: calc(100% - 32px);
   padding: 10px 18px;
@@ -557,6 +581,16 @@ body.sheet-open { overflow: hidden; }
 .quiz-opt:disabled { color: var(--label); opacity: 1; cursor: default; }
 .quiz-why { font-size: 15px; line-height: 1.4; margin: 8px 0 16px; }
 
+/* ===== Telegram и копия текстом ===== */
+.in-telegram .file-only { display: none; }
+.backup-text {
+  display: block; width: 100%; height: 38vh; resize: none;
+  padding: 12px; border: 0; border-radius: var(--radius); outline: none;
+  background: var(--card); color: var(--label);
+  font: 13px/1.35 ui-monospace, Menlo, Consolas, monospace;
+}
+.backup-text:focus { box-shadow: 0 0 0 2px var(--accent); }
+
 /* ===== Как пользоваться ===== */
 .help-intro { text-align: center; padding: 24px 20px; }
 .help-intro h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
@@ -743,9 +777,12 @@ body.sheet-open { overflow: hidden; }
 
   <p class="card-title">Резервная копия</p>
   <div class="group">
-    <button class="row accent" id="btn-export">Сохранить копию в файл</button>
-    <button class="row accent" id="btn-import">Восстановить из файла</button>
+    <button class="row accent file-only" id="btn-export">Сохранить копию в файл</button>
+    <button class="row accent file-only" id="btn-import">Восстановить из файла</button>
+    <button class="row accent" id="btn-copy">Скопировать копию текстом</button>
+    <button class="row accent" id="btn-paste">Вставить копию из текста</button>
   </div>
+  <p class="footnote">Текстовую копию удобно хранить в «Избранном» Telegram: скопируйте и отправьте её себе сообщением. Так же переносятся данные между Safari и Telegram.</p>
   <p class="footnote" id="st-backup">Копия ещё не сохранялась.</p>
   <input type="file" id="import-file" accept="application/json,.json" hidden>
 
@@ -849,6 +886,18 @@ body.sheet-open { overflow: hidden; }
     <button type="button" class="row danger" id="tx-delete">Удалить запись</button>
   </div>
 </form>
+
+<!-- Резервная копия текстом -->
+<div class="sheet" id="sheet-text" role="dialog" aria-modal="true" aria-labelledby="text-title">
+  <div class="sheet-head">
+    <button type="button" class="done" style="justify-self:start;font-weight:400" data-close-sheet>Отмена</button>
+    <h2 id="text-title">Копия текстом</h2>
+    <span></span>
+  </div>
+  <p class="footnote" id="text-hint" style="margin-top:4px"></p>
+  <textarea id="text-area" class="backup-text" spellcheck="false" autocomplete="off"></textarea>
+  <button class="btn-primary" id="text-action" style="margin-top:12px"></button>
+</div>
 
 <!-- Карточка базы знаний -->
 <div class="sheet" id="sheet-card" role="dialog" aria-modal="true" aria-labelledby="card-title">
@@ -1655,28 +1704,137 @@ function migrate(raw) {
   }
 }
 
-function loadState() {
+/* Где лежат данные:
+   - в Safari и на экране «Домой» — localStorage;
+   - внутри Telegram — DeviceStorage (на самом телефоне, Bot API 9.0+), а localStorage — запасная копия:
+     хранилище встроенного браузера Telegram может очиститься. */
+let deviceStorage = null
+
+function readLocal() {
+  try { return localStorage.getItem(STORAGE_KEY) } catch (e) { return null }
+}
+
+/** Ответ DeviceStorage. Если Telegram не ответил за 1,5 с (например, страница открыта не в Telegram), — null. */
+function deviceGet(key) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), 1500)
+    try {
+      deviceStorage.getItem(key, (err, value) => { clearTimeout(timer); resolve(err ? null : value || null) })
+    } catch (e) { clearTimeout(timer); resolve(null) }
+  })
+}
+
+async function loadState() {
+  let text = null
+  if (deviceStorage) text = await deviceGet(STORAGE_KEY)
+  // Первый запуск в Telegram после обновления: данных в DeviceStorage ещё нет — берём запасную копию.
+  const fromLocal = !text
+  if (!text) text = readLocal()
   try {
-    const text = localStorage.getItem(STORAGE_KEY)
-    if (!text) return emptyState()
-    return migrate(JSON.parse(text))
+    const s = text ? migrate(JSON.parse(text)) : emptyState()
+    if (deviceStorage && fromLocal && text) deviceStorage.setItem(STORAGE_KEY, text, () => {})
+    return s
   } catch (e) {
     console.error('Не удалось прочитать данные', e)
     return emptyState()
   }
 }
 
-let state = loadState()
+let state = emptyState()
 
 function save() {
+  const text = JSON.stringify(state)
+  let ok = true
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-    return true
+    localStorage.setItem(STORAGE_KEY, text)
   } catch (e) {
-    console.error('Не удалось сохранить данные', e)
-    toast('Не удалось сохранить: в браузере закончилось место')
-    return false
+    ok = false
+    console.error('Не удалось сохранить в localStorage', e)
+    if (!deviceStorage) toast('Не удалось сохранить: в браузере закончилось место')
   }
+  if (deviceStorage) {
+    try {
+      deviceStorage.setItem(STORAGE_KEY, text, (err) => { if (err) toast('Не удалось сохранить в Telegram — сделайте копию') })
+    } catch (e) { toast('Не удалось сохранить в Telegram — сделайте копию') }
+  }
+  return ok || !!deviceStorage
+}
+
+/* ===== Telegram Mini App =====
+   Telegram передаёт параметры запуска в адресе (#tgWebAppData=…). Скрипт Telegram подгружаем только
+   в этом случае: в Safari приложение по-прежнему не зависит от сторонних серверов. */
+const TG_SCRIPT = 'https://telegram.org/js/telegram-web-app.js'
+let tg = null
+
+function isTelegramLaunch(hash, remembered) {
+  return /(^|[#&])tgWebApp/.test(hash) || remembered === '1'
+}
+
+function loadScript(src, timeout) {
+  return new Promise((resolve) => {
+    const s = document.createElement('script')
+    const timer = setTimeout(() => resolve(false), timeout)
+    s.src = src
+    s.onload = () => { clearTimeout(timer); resolve(true) }
+    s.onerror = () => { clearTimeout(timer); resolve(false) }
+    document.head.appendChild(s)
+  })
+}
+
+async function initTelegram() {
+  let remembered = null
+  try { remembered = sessionStorage.getItem('finish.tg') } catch (e) { /* не страшно */ }
+  if (!isTelegramLaunch(location.hash, remembered)) return
+  try { sessionStorage.setItem('finish.tg', '1') } catch (e) { /* не страшно */ }
+  if (!(await loadScript(TG_SCRIPT, 4000))) return
+  const app = window.Telegram && window.Telegram.WebApp
+  if (!app || app.platform === 'unknown') return
+  tg = app
+  document.documentElement.classList.add('in-telegram')
+  tg.ready()
+  tg.expand()
+  // Иначе прокрутка вниз закрывает мини-приложение.
+  if (tg.isVersionAtLeast('7.7') && tg.disableVerticalSwipes) tg.disableVerticalSwipes()
+  if (tg.isVersionAtLeast('9.0') && tg.DeviceStorage) deviceStorage = tg.DeviceStorage
+  applyTelegramTheme()
+  applyTelegramInsets()
+  tg.onEvent('themeChanged', applyTelegramTheme)
+  tg.onEvent('safeAreaChanged', applyTelegramInsets)
+  tg.onEvent('contentSafeAreaChanged', applyTelegramInsets)
+  tg.BackButton.onClick(closeSheet)
+}
+
+/** Светлая или тёмная тема — как в Telegram. Шапку и фон Telegram красим в цвет фона приложения. */
+function applyTelegramTheme() {
+  const scheme = tg.colorScheme === 'dark' ? 'dark' : 'light'
+  document.documentElement.dataset.theme = scheme
+  document.documentElement.style.colorScheme = scheme
+  const bg = scheme === 'dark' ? '#000000' : '#f2f2f7'
+  try {
+    tg.setHeaderColor(bg)
+    tg.setBackgroundColor(bg)
+    if (tg.isVersionAtLeast('7.10') && tg.setBottomBarColor) tg.setBottomBarColor(bg)
+  } catch (e) { /* старый Telegram — не страшно */ }
+}
+
+/** Отступы: системные + панели самого Telegram (важно в полноэкранном режиме). */
+function applyTelegramInsets() {
+  const sa = tg.safeAreaInset || {}
+  const ca = tg.contentSafeAreaInset || {}
+  const root = document.documentElement.style
+  root.setProperty('--safe-top', 'max(env(safe-area-inset-top), ' + ((sa.top || 0) + (ca.top || 0)) + 'px)')
+  root.setProperty('--safe-bottom', 'max(env(safe-area-inset-bottom), ' + ((sa.bottom || 0) + (ca.bottom || 0)) + 'px)')
+}
+
+/** Тактильный отклик — в Safari его нет, а Telegram даёт. Вне Telegram ничего не делает. */
+function haptic(kind) {
+  const h = tg && tg.HapticFeedback
+  if (!h) return
+  try {
+    if (kind === 'success' || kind === 'error') h.notificationOccurred(kind)
+    else if (kind === 'select') h.selectionChanged()
+    else h.impactOccurred('light')
+  } catch (e) { /* не страшно */ }
 }
 
 /** Просим браузер не удалять данные при нехватке места. Safari может отказать — тогда спасает резервная копия. */
@@ -1762,12 +1920,15 @@ function openSheet(id) {
   openSheetEl.classList.add('open')
   document.body.classList.add('sheet-open')
   openSheetEl.scrollTop = 0
+  // В Telegram открытый лист закрывается его кнопкой «Назад» в шапке.
+  if (tg) tg.BackButton.show()
 }
 function closeSheet() {
   if (!openSheetEl) return
   openSheetEl.classList.remove('open')
   document.body.classList.remove('sheet-open')
   openSheetEl = null
+  if (tg) tg.BackButton.hide()
 }
 document.addEventListener('click', (e) => { if (e.target.closest('[data-close-sheet]')) closeSheet() })
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet() })
@@ -1778,9 +1939,13 @@ function renderSettings() {
   document.getElementById('st-tx').textContent = state.transactions.length
   document.getElementById('st-cats').textContent = state.categories.filter((c) => !c.hidden).length
 
-  document.getElementById('st-persist').textContent = storagePersisted
-    ? 'Данные хранятся только в этом браузере. Браузер не будет удалять их сам.'
-    : 'Данные хранятся только в этом браузере. Он может очистить их, если приложением долго не пользоваться, — сохраняйте копию.'
+  document.getElementById('st-persist').textContent = deviceStorage
+    ? 'Данные хранятся на этом телефоне внутри Telegram. Они отдельные от версии в Safari — переносите их копией текстом.'
+    : tg
+      ? 'Эта версия Telegram не умеет надёжно хранить данные мини-приложений. Обновите Telegram и сохраняйте копию.'
+      : storagePersisted
+        ? 'Данные хранятся только в этом браузере. Браузер не будет удалять их сам.'
+        : 'Данные хранятся только в этом браузере. Он может очистить их, если приложением долго не пользоваться, — сохраняйте копию.'
 
   const income = document.getElementById('st-income')
   if (document.activeElement !== income) {
@@ -1837,16 +2002,17 @@ async function importBackup(file) {
   try {
     next = migrate(JSON.parse(await file.text()))
   } catch (e) {
-    toast(e instanceof SyntaxError ? 'Это не файл копии' : e.message)
-    return
+    toast(e instanceof SyntaxError ? 'Это не копия «Финиша»' : e.message)
+    return false
   }
   const summary = next.loans.length + ' ' + plural(next.loans.length, 'кредит', 'кредита', 'кредитов') + ', '
     + next.transactions.length + ' ' + plural(next.transactions.length, 'операция', 'операции', 'операций')
-  if (!confirm('Заменить текущие данные копией?\n\nВ копии: ' + summary + '.')) return
+  if (!confirm('Заменить текущие данные копией?\n\nВ копии: ' + summary + '.')) return false
   state = next
   save()
   renderAll()
   toast('Данные восстановлены')
+  return true
 }
 
 document.getElementById('open-settings').addEventListener('click', () => {
@@ -1856,6 +2022,57 @@ document.getElementById('open-settings').addEventListener('click', () => {
 document.getElementById('btn-export').addEventListener('click', () => {
   exportBackup().catch((e) => { console.error(e); toast('Не удалось сохранить копию') })
 })
+/* --- Копия текстом: буфер обмена ↔ поле для вставки --- */
+let textMode = 'paste'
+function openTextSheet(mode, text) {
+  textMode = mode
+  const area = document.getElementById('text-area')
+  area.value = text || ''
+  area.readOnly = mode === 'show'
+  document.getElementById('text-title').textContent = mode === 'show' ? 'Скопируйте копию' : 'Вставьте копию'
+  document.getElementById('text-hint').textContent = mode === 'show'
+    ? 'Не получилось скопировать автоматически. Выделите весь текст, скопируйте и отправьте себе в «Избранное».'
+    : 'Вставьте сюда текст копии — тот, что вы сохраняли в «Избранном» или заметках.'
+  document.getElementById('text-action').textContent = mode === 'show' ? 'Готово' : 'Восстановить'
+  closeSheet()
+  openSheet('sheet-text')
+  if (mode === 'show') { area.focus(); area.select() }
+}
+
+async function copyBackup() {
+  const prevBackup = state.settings.lastBackup
+  state.settings.lastBackup = todayISO()
+  const json = JSON.stringify(state)
+  try {
+    await navigator.clipboard.writeText(json)
+    save()
+    renderSettings()
+    haptic('success')
+    toast('Копия скопирована — вставьте её в «Избранное»')
+  } catch (e) {
+    // Буфер обмена недоступен (так бывает во встроенных браузерах) — показываем текст для ручного копирования.
+    // Дату копии ставим, только когда человек нажмёт «Готово».
+    state.settings.lastBackup = prevBackup
+    openTextSheet('show', json)
+  }
+}
+
+document.getElementById('btn-copy').addEventListener('click', () => copyBackup())
+document.getElementById('btn-paste').addEventListener('click', () => openTextSheet('paste', ''))
+document.getElementById('text-action').addEventListener('click', () => {
+  if (textMode === 'show') {
+    state.settings.lastBackup = todayISO()
+    save()
+    renderSettings()
+    closeSheet()
+    toast('Копия сохранена')
+    return
+  }
+  const text = document.getElementById('text-area').value.trim()
+  if (!text) { toast('Сначала вставьте текст копии'); return }
+  importBackup(new File([text], 'paste.json', { type: 'application/json' })).then((ok) => { if (ok) closeSheet() })
+})
+
 document.getElementById('st-income').addEventListener('change', (e) => {
   const text = e.target.value.trim()
   const v = text ? parseMoney(text) : null
@@ -2301,6 +2518,7 @@ function recordPrepayment() {
   save()
   renderAll()
   const after = loanState(updated, today)
+  haptic('success')
   toast(after.balance <= 0 ? 'Кредит закрыт!' : sc.mode === 'term'
     ? 'Записано. Закрытие: ' + fmtMonthYear(after.payoffDate)
     : 'Записано. Новый платёж: ' + fmtRubExact(updated.payment))
@@ -2479,6 +2697,7 @@ document.getElementById('tx-cats').addEventListener('click', (e) => {
   closeSheet()
   moneyMonth = monthKey(tx.date)
   renderAll()
+  haptic('light')
   toast((editingTxId ? 'Изменено: ' : 'Записано: ') + cat.name + ' ' + fmtRub(amount))
 })
 
@@ -2700,6 +2919,7 @@ document.getElementById('card-body').addEventListener('click', (e) => {
     const today = todayISO()
     const chosen = Number(opt.dataset.answer)
     const correct = chosen === l.answer
+    haptic(correct ? 'success' : 'error')
     const wasNew = !state.learn.cards[l.id]
     // В расписание идёт только ответ на карточку, которую пора показывать; тренировка заранее его не сбивает.
     const card = state.learn.cards[l.id]
@@ -2797,6 +3017,7 @@ function markSaved(amount) {
   save()
   renderPiggy()
   dropCoin(fromRect)
+  haptic('success')
   const p = gameProgress(state.game, today)
   toast(p.habit === HABIT_DAYS ? '66 дней! Привычка сформирована 🎉' : 'В копилке +' + fmtRub(amount) + ' · подряд ' + p.streak + ' ' + plural(p.streak, 'день', 'дня', 'дней'))
 }
@@ -2837,6 +3058,7 @@ document.getElementById('piggy-main').addEventListener('click', (e) => {
     state.game.deposited += entry.amount
     save()
     renderAll()
+    haptic('success')
     toast('Копилка внесена! Экономия ≈ ' + fmtRub(entry.interestSaved))
   }
 })
@@ -3106,6 +3328,14 @@ test('Карточки на сегодня: повторения + одна но
   eq(cardsForToday({ ...learn, newOn: '2026-01-02' }, lessons, '2026-01-02').map((l) => l.id).join(), 'a')
 })
 
+// --- Telegram ---
+test('Запуск из Telegram узнаётся по параметрам в адресе', () => {
+  eq(isTelegramLaunch('#tgWebAppData=query_id%3D1&tgWebAppVersion=9.1', null), true)
+  eq(isTelegramLaunch('#scenarios&tgWebAppPlatform=ios', null), true)
+  eq(isTelegramLaunch('#home', null), false)
+  eq(isTelegramLaunch('#home', '1'), true)   // после перехода по вкладкам параметры из адреса пропадают
+})
+
 test('Ввод суммы: «5 380 000,50» → 538 000 050 коп.', () => eq(parseMoney('5 380 000,50'), 538000050))
 test('Ввод суммы: мусор → пусто', () => { eq(parseMoney('abc'), null); eq(parseMoney('12,345'), null); eq(parseMoney(''), null) })
 test('Срок словами: 204 мес → «17 лет», 15 мес → «1 год 3 мес»', () => { eq(fmtTerm(204), '17 лет'); eq(fmtTerm(15), '1 год 3 мес') })
@@ -3186,6 +3416,7 @@ document.querySelector('.tabbar').addEventListener('click', (e) => {
   const btn = e.target.closest('.tab')
   if (!btn) return
   const name = btn.dataset.tab
+  haptic('select')
   if (location.hash.slice(1) === name) window.scrollTo({ top: 0, behavior: 'smooth' })
   else location.hash = name
 })
@@ -3201,10 +3432,17 @@ window.addEventListener('scroll', () => {
 }, { passive: true })
 
 window.addEventListener('hashchange', () => showTab(location.hash.slice(1)))
-showTab(location.hash.slice(1))
-renderAll()
-requestPersist()
-if (!helpSeen() && !state.loans.length && location.hash !== '#test') openHelp()
+
+/* Запуск: сначала Telegram (если открыто из него), потом данные — они могут лежать в DeviceStorage. */
+async function boot() {
+  await initTelegram()
+  state = await loadState()
+  showTab(location.hash.slice(1))
+  renderAll()
+  if (!tg) requestPersist()
+  if (!helpSeen() && !state.loans.length && location.hash !== '#test') openHelp()
+}
+boot()
 </script>
 </body>
 </html>
