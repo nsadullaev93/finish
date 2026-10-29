@@ -349,6 +349,12 @@ body.sheet-open { overflow: hidden; }
 .legend div { display: flex; align-items: center; gap: 8px; }
 .legend i { width: 16px; height: 3px; border-radius: 2px; flex: none; }
 .legend span { color: var(--label-2); margin-left: auto; white-space: nowrap; }
+.strategy { border: 2px solid transparent; }
+.strategy.best { border-color: var(--accent); }
+.strategy .saved { margin-top: 10px; font-size: 13px; color: var(--label-2); }
+.strategy .saved b { display: block; font-size: 24px; font-weight: 700; letter-spacing: -0.4px; color: var(--accent); }
+.meta.two { grid-template-columns: 1fr 1fr; }
+.best-badge { color: var(--accent); background: var(--accent-soft); }
 .journal-row { display: block; }
 .journal-row .top { display: flex; justify-content: space-between; gap: 8px; }
 .journal-row .caption { margin-top: 2px; }
@@ -576,9 +582,9 @@ function parseNumber(text) {
 const rubFmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 })
 const rubFmtExact = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 /** Крупные суммы — до рубля. */
-function fmtRub(k) { return rubFmt.format(Math.round(k / 100)) + ' ₽' }
+function fmtRub(k) { return rubFmt.format(Math.round(k / 100)) + ' ₽' }
 /** Платежи — с копейками. */
-function fmtRubExact(k) { return rubFmtExact.format(k / 100) + ' ₽' }
+function fmtRubExact(k) { return rubFmtExact.format(k / 100) + ' ₽' }
 /** Для полей ввода: без пробелов-разделителей, с копейками только если они есть. */
 function moneyInput(k) { return k % 100 === 0 ? String(k / 100) : (k / 100).toFixed(2).replace('.', ',') }
 
@@ -600,6 +606,9 @@ const MONTHS_GEN = ['января', 'февраля', 'марта', 'апрел�
 function fmtDayMonth(d) { return d.getDate() + ' ' + MONTHS_GEN[d.getMonth()] }
 /** «октября 2043» — для «вместо …». */
 function fmtMonthYearGen(d) { return MONTHS_GEN[d.getMonth()] + ' ' + d.getFullYear() }
+const MONTHS_PREP = ['январе', 'феврале', 'марте', 'апреле', 'мае', 'июне', 'июле', 'августе', 'сентябре', 'октябре', 'ноябре', 'декабре']
+/** «октябре 2043» — для «в …». */
+function fmtMonthYearPrep(d) { return MONTHS_PREP[d.getMonth()] + ' ' + d.getFullYear() }
 
 /** Процент выплаченного вниз до целого: 99,6% — ещё не 100%. */
 function pct(progress) { return Math.floor(progress * 100) }
@@ -745,6 +754,71 @@ function compareScenario(balance, loan, asOf, opts) {
     term: side(simulate({ balance, rate: loan.rate, payment: loan.payment, mode: 'term', ...opts })),
     payment: side(simulate({ balance, rate: loan.rate, payment: loan.payment, mode: 'payment', ...opts })),
   }
+}
+
+/**
+ * Погашение нескольких кредитов сразу. Каждый месяц на долги уходит одна и та же сумма:
+ * все обычные платежи + extra. Сначала вносятся обычные платежи, всё оставшееся
+ * (досрочка и платежи уже закрытых кредитов) идёт в кредиты по порядку order.
+ * Режим — «уменьшить срок»: платежи по графику не меняются.
+ * loans: [{ id, balance, rate, payment }] — текущие остатки.
+ */
+function simulatePlan(loans, extra, order) {
+  const open = loans.filter((l) => l.balance > 0).map((l) => ({ ...l, b: l.balance, closedAt: 0 }))
+  const byId = Object.fromEntries(open.map((l) => [l.id, l]))
+  const budget = open.reduce((a, l) => a + l.payment, 0) + extra
+  const outflow = []
+  let totalInterest = 0
+  let month = 0
+  while (open.some((l) => l.b > 0) && month < MAX_MONTHS) {
+    month++
+    let spent = 0
+    for (const l of open) {
+      if (l.b <= 0) continue
+      const interest = Math.round(l.b * monthlyRate(l.rate))
+      totalInterest += interest
+      const pay = Math.min(l.payment, l.b + interest)
+      l.b -= pay - interest
+      if (l.b > 0 && l.b <= l.payment * TAIL_SHARE) { spent += l.b; l.b = 0 }
+      spent += pay
+    }
+    let surplus = budget - spent
+    for (const id of order) {
+      const l = byId[id]
+      if (!l || l.b <= 0 || surplus <= 0) continue
+      const x = Math.min(surplus, l.b)
+      l.b -= x
+      surplus -= x
+      spent += x
+    }
+    for (const l of open) if (l.b <= 0 && !l.closedAt) l.closedAt = month
+    outflow.push(spent)
+  }
+  return {
+    months: month,
+    totalInterest,
+    closedAt: Object.fromEntries(open.map((l) => [l.id, l.closedAt])),
+    outflow,
+  }
+}
+
+/** Порядки погашения. Одинаковые порядки склеиваются: у двух кредитов «лавина» обычно совпадает с одним из «всё в …». */
+function payoffStrategies(loans) {
+  const open = loans.filter((l) => l.balance > 0)
+  const byRate = (a, b) => b.rate - a.rate || a.balance - b.balance
+  const list = open.map((l) => ({
+    name: 'Сначала «' + l.name + '»',
+    order: [l, ...open.filter((o) => o !== l).sort(byRate)],
+  }))
+  list.push({ name: 'Лавина — сначала дорогой', order: [...open].sort(byRate) })
+  list.push({ name: 'Снежный ком — сначала маленький', order: [...open].sort((a, b) => a.balance - b.balance || b.rate - a.rate) })
+  const groups = new Map()
+  for (const s of list) {
+    const key = s.order.map((l) => l.id).join('|')
+    if (groups.has(key)) groups.get(key).aliases.push(s.name)
+    else groups.set(key, { name: s.name, aliases: [], order: s.order.map((l) => l.id) })
+  }
+  return [...groups.values()]
 }
 
 /** Разовое досрочное погашение: новые поля кредита и оценка эффекта для журнала. */
@@ -1152,7 +1226,7 @@ const sc = { loanId: null, kind: 'monthly', amount: { monthly: kop(10000), lump:
 
 function fmtShortRub(k) {
   const r = Math.round(k / 100)
-  return r % 1000 === 0 ? rubFmt.format(r / 1000) + ' тыс.' : rubFmt.format(r) + ' ₽'
+  return r % 1000 === 0 ? rubFmt.format(r / 1000) + ' тыс.' : rubFmt.format(r) + ' ₽'
 }
 
 function renderScenarios() {
@@ -1243,10 +1317,49 @@ function renderScenarioResult() {
     + futures.map((f) => '<div><i style="background:' + (f.cls === 'base' ? 'var(--label-3)' : 'var(--accent)') + (f.cls === 'double' ? ';opacity:.45' : '') + '"></i>'
       + f.name + '<span>' + (f.r.payoffDate ? fmtMonthYear(f.r.payoffDate) : 'сразу') + '</span></div>').join('')
     + '</div></div>'
+    + (monthly ? renderStrategies(amount, today) : '')
     + (monthly
       ? '<p class="footnote">Это прогноз. Когда внесёте досрочку в банке, запишите её во вкладке «Разово» — остаток и даты обновятся.</p>'
       : '<button class="btn-primary" id="sc-record">Записать досрочку ' + fmtRub(Math.min(amount, s.balance)) + '</button>'
         + '<p class="footnote" style="margin-top:8px">Запишите, когда деньги уже внесены в банк. Режим — «' + MODE_LABEL[sc.mode].toLowerCase() + '».</p>')
+}
+
+/** Блок «Куда направить деньги»: все кредиты сразу, разные порядки погашения. */
+function renderStrategies(amount, today) {
+  const loans = state.loans.map((l) => ({ ...l, balance: loanState(l, today).balance }))
+    .filter((l) => l.balance > 0 && Number.isFinite(monthsToPayoff(l.balance, l.rate, l.payment)))
+  if (loans.length < 2) return ''
+
+  const dateOf = (id, months) => nthPaymentDate(today, loans.find((l) => l.id === id).payDay, months)
+  const lastDate = (closedAt) => Object.entries(closedAt).map(([id, m]) => dateOf(id, m)).reduce((a, b) => (b > a ? b : a))
+  // База — как сейчас: каждый кредит по своему графику, без досрочки.
+  const base = {}
+  let baseInterest = 0
+  for (const l of loans) {
+    const r = simulate({ balance: l.balance, rate: l.rate, payment: l.payment })
+    base[l.id] = r.months
+    baseInterest += r.totalInterest
+  }
+  const mortgage = loans.find((l) => l.kind === 'mortgage')
+
+  const rows = payoffStrategies(loans).map((s) => {
+    const p = simulatePlan(loans, amount, s.order)
+    return { ...s, saved: baseInterest - p.totalInterest, free: lastDate(p.closedAt), mortgage: mortgage ? dateOf(mortgage.id, p.closedAt[mortgage.id]) : null }
+  })
+  const best = rows.reduce((a, b) => (b.saved > a.saved || (b.saved === a.saved && b.free < a.free) ? b : a))
+
+  return '<p class="card-title">Куда направить +' + fmtShortRub(amount) + ' — все кредиты</p>'
+    + rows.map((r) => '<div class="card strategy' + (r === best ? ' best' : '') + '">'
+      + '<div class="loan-head"><span class="loan-name">' + escapeHTML(r.name) + '</span>'
+      + (r === best ? '<span class="badge best-badge">выгоднее всего</span>' : '') + '</div>'
+      + (r.aliases.length ? '<div class="caption">Это же: ' + r.aliases.map((a) => escapeHTML(a.split(' — ')[0].toLowerCase())).join(', ') + '</div>' : '')
+      + '<div class="saved"><b>' + fmtRub(r.saved) + '</b> экономия на процентах</div>'
+      + '<div class="meta two">'
+      + '<div><b>' + fmtMonthYear(r.free) + '</b><span>все долги закрыты</span></div>'
+      + (r.mortgage ? '<div><b>' + fmtMonthYear(r.mortgage) + '</b><span>ипотека закрыта</span></div>' : '')
+      + '</div></div>').join('')
+    + '<p class="footnote">Без досрочки все долги закроются в ' + fmtMonthYearPrep(lastDate(base)) + '. '
+    + 'Когда один кредит закрыт, его платёж тоже идёт на следующий — сумма на долги в месяц не уменьшается. Режим — «уменьшить срок». Выбор за вами.</p>'
 }
 
 /** SVG-график остатка долга: линия для каждого будущего, заливка под выбранным. */
@@ -1555,6 +1668,36 @@ test('Досрочка больше остатка — кредит закрыв
   const t = applyPrepayment(loan, kop(80000), 'term', '2026-01-01')
   eq(t.loan.balance, 0); eq(t.entry.amount, kop(50000))
   eq(loanState(t.loan, '2026-01-01').payoffDate, null)
+})
+
+// --- Стратегии по нескольким кредитам ---
+const T_A = { id: 'a', name: 'A', balance: kop(100000), rate: 5, payment: kop(5000) }      // маленький и дешёвый
+const T_B = { id: 'b', name: 'B', balance: kop(500000), rate: 20, payment: kop(15000) }    // большой и дорогой
+test('План по одному кредиту совпадает с обычным сценарием «срок»', () => {
+  const p = simulatePlan([{ id: 'x', ...T_LOAN, balance: kop(1000000) }], kop(5000), ['x'])
+  const s = simulate({ balance: kop(1000000), ...T_LOAN, extraMonthly: kop(5000), mode: 'term' })
+  eq(p.months, s.months); eq(p.totalInterest, s.totalInterest)
+})
+test('Сумма на долги в месяц не падает, пока всё не закрыто', () => {
+  const p = simulatePlan([T_A, T_B], kop(10000), ['b', 'a'])
+  const budget = T_A.payment + T_B.payment + kop(10000)
+  const short = p.outflow.slice(0, -1).filter((x) => x !== budget)
+  if (short.length) throw new Error(short.length + ' мес. с меньшей суммой')
+})
+test('Платёж закрытого кредита переходит на следующий', () => {
+  const p = simulatePlan([T_A, T_B], 0, ['a', 'b'])
+  const alone = simulate({ balance: T_B.balance, rate: T_B.rate, payment: T_B.payment }).months
+  if (!(p.closedAt.a < p.closedAt.b && p.closedAt.b < alone)) throw new Error('B закрылся на ' + p.closedAt.b + ' мес., без перетока ' + alone)
+})
+test('Лавина экономит не меньше снежного кома', () => {
+  const av = simulatePlan([T_A, T_B], kop(10000), ['b', 'a'])
+  const sb = simulatePlan([T_A, T_B], kop(10000), ['a', 'b'])
+  if (!(av.totalInterest <= sb.totalInterest)) throw new Error('лавина ' + av.totalInterest + ' > ком ' + sb.totalInterest)
+})
+test('Одинаковые порядки склеиваются: 2 кредита → 2 варианта', () => {
+  const s = payoffStrategies([T_A, T_B])
+  eq(s.length, 2)
+  eq(s.reduce((a, x) => a + 1 + x.aliases.length, 0), 4)
 })
 
 test('Ввод суммы: «5 380 000,50» → 538 000 050 коп.', () => eq(parseMoney('5 380 000,50'), 538000050))
