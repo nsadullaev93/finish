@@ -147,6 +147,87 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .tab svg { width: 26px; height: 26px; }
 .tab[aria-selected="true"] { color: var(--accent); }
+
+/* ===== Кнопка в верхней панели (над крупным заголовком) ===== */
+.nav-bar { display: flex; justify-content: flex-end; height: 44px; margin-bottom: -44px; position: relative; z-index: 1; }
+.icon-btn {
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  color: var(--accent);
+  border-radius: 50%;
+}
+.icon-btn svg { width: 24px; height: 24px; }
+.icon-btn:active { opacity: 0.4; }
+
+/* ===== Сгруппированный список, как в «Настройках» ===== */
+.group { background: var(--card); border-radius: var(--radius); overflow: hidden; margin-bottom: 8px; }
+.row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 16px;
+  text-align: left;
+  font-size: 17px;
+  position: relative;
+}
+.row + .row::before {
+  content: ""; position: absolute; top: 0; left: 16px; right: 0;
+  border-top: 0.5px solid var(--separator);
+}
+button.row:active { background: var(--fill); }
+.row .value { color: var(--label-2); text-align: right; }
+.row.accent { color: var(--accent); }
+.row.danger { color: var(--red); }
+.footnote { color: var(--label-2); font-size: 13px; margin: 0 16px 24px; }
+
+/* ===== Лист снизу ===== */
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: 20;
+  background: rgba(0, 0, 0, 0.32);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+}
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 21;
+  max-width: 480px; margin: 0 auto;
+  max-height: calc(100dvh - env(safe-area-inset-top) - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+  border-radius: 12px 12px 0 0;
+  padding: 0 var(--side) calc(24px + env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+  visibility: hidden;
+}
+.sheet-open .sheet-backdrop { opacity: 1; pointer-events: auto; }
+.sheet.open { transform: none; visibility: visible; }
+.sheet-head {
+  position: sticky; top: 0; z-index: 1;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  height: 56px;
+  margin: 0 calc(-1 * var(--side)) 8px;
+  padding: 0 var(--side);
+  background: var(--bg);
+}
+.sheet-head h2 { font-size: 17px; font-weight: 600; }
+.sheet-head .done { justify-self: end; color: var(--accent); font-weight: 600; min-height: 44px; padding: 0 4px; }
+body.sheet-open { overflow: hidden; }
+
+/* ===== Всплывающее сообщение ===== */
+.toast {
+  position: fixed; left: 50%; z-index: 30;
+  bottom: calc(var(--tab-h) + env(safe-area-inset-bottom) + 16px);
+  transform: translate(-50%, 20px);
+  max-width: calc(100% - 32px);
+  padding: 10px 18px;
+  border-radius: 20px;
+  background: var(--label); color: var(--bg);
+  font-size: 15px; font-weight: 500;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
 </style>
 </head>
 <body>
@@ -194,6 +275,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
   <!-- Деньги -->
   <section class="screen" id="screen-money" aria-labelledby="t-money">
+    <div class="nav-bar">
+      <button class="icon-btn" id="open-settings" aria-label="Настройки">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
     <h1 class="large-title" id="t-money">Деньги</h1>
     <div class="card empty">
       <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/><path d="M16 15h2"/></svg></div>
@@ -225,8 +311,356 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   </div>
 </nav>
 
+<!-- Настройки -->
+<div class="sheet-backdrop" data-close-sheet></div>
+<div class="sheet" id="sheet-settings" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+  <div class="sheet-head">
+    <span></span>
+    <h2 id="settings-title">Настройки</h2>
+    <button class="done" data-close-sheet>Готово</button>
+  </div>
+
+  <p class="card-title">Данные на этом устройстве</p>
+  <div class="group">
+    <div class="row"><span>Кредиты</span><span class="value" id="st-loans">0</span></div>
+    <div class="row"><span>Операции</span><span class="value" id="st-tx">0</span></div>
+    <div class="row"><span>Категории</span><span class="value" id="st-cats">0</span></div>
+  </div>
+  <p class="footnote" id="st-persist">Данные хранятся только в этом браузере.</p>
+
+  <p class="card-title">Резервная копия</p>
+  <div class="group">
+    <button class="row accent" id="btn-export">Сохранить копию в файл</button>
+    <button class="row accent" id="btn-import">Восстановить из файла</button>
+  </div>
+  <p class="footnote" id="st-backup">Копия ещё не сохранялась.</p>
+  <input type="file" id="import-file" accept="application/json,.json" hidden>
+
+  <p class="card-title">Пример</p>
+  <div class="group">
+    <button class="row accent" id="btn-demo">Заполнить примером</button>
+  </div>
+  <p class="footnote">Два кредита и три месяца доходов и расходов, чтобы посмотреть, как работает приложение. Текущие данные будут заменены.</p>
+
+  <div class="group">
+    <button class="row danger" id="btn-reset">Удалить все данные</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
 <script>
 'use strict'
+
+/* ===== Утилиты ===== */
+
+/** Даты — строки YYYY-MM-DD в местном времени. */
+function toISO(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+}
+function fromISO(s) {
+  const [y, m, d] = s.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+function todayISO() { return toISO(new Date()) }
+function daysBetween(a, b) { return Math.round((fromISO(b) - fromISO(a)) / 86400000) }
+
+/** Суммы храним в копейках (целые числа). */
+function kop(rubles) { return Math.round(rubles * 100) }
+
+function uid() {
+  const a = new Uint32Array(2)
+  crypto.getRandomValues(a)
+  return a[0].toString(36) + a[1].toString(36)
+}
+
+function plural(n, one, few, many) {
+  const n10 = n % 10, n100 = n % 100
+  if (n10 === 1 && n100 !== 11) return one
+  if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return few
+  return many
+}
+
+/* ===== Хранилище =====
+   Всё состояние — один JSON-объект в localStorage. При изменении схемы
+   повышаем SCHEMA_VERSION и дописываем шаг в migrate(). */
+const STORAGE_KEY = 'finish.v1'
+const SCHEMA_VERSION = 1
+
+const DEFAULT_CATEGORIES = [
+  { id: 'salary',       name: 'Зарплата',          icon: '💼', type: 'income',  regular: true },
+  { id: 'bonus',        name: 'Премия',            icon: '🎁', type: 'income',  regular: false },
+  { id: 'income-other', name: 'Другое',            icon: '➕', type: 'income',  regular: false },
+  { id: 'food',         name: 'Продукты',          icon: '🛒', type: 'expense' },
+  { id: 'car',          name: 'Машина',            icon: '🚗', type: 'expense' },
+  { id: 'kids',         name: 'Дети',              icon: '🧸', type: 'expense' },
+  { id: 'home',         name: 'Дом и коммуналка',  icon: '🏠', type: 'expense' },
+  { id: 'health',       name: 'Здоровье',          icon: '💊', type: 'expense' },
+  { id: 'fun',          name: 'Развлечения',       icon: '🎬', type: 'expense' },
+  { id: 'cafe',         name: 'Кафе',              icon: '☕', type: 'expense' },
+  { id: 'subs',         name: 'Подписки',          icon: '🔁', type: 'expense' },
+  { id: 'clothes',      name: 'Одежда',            icon: '👕', type: 'expense' },
+  { id: 'phone',        name: 'Связь',             icon: '📱', type: 'expense' },
+  { id: 'other',        name: 'Другое',            icon: '📦', type: 'expense' },
+].map((c) => ({ regular: false, hidden: false, ...c }))
+
+function emptyState() {
+  return {
+    version: SCHEMA_VERSION,
+    loans: [],
+    prepayments: [],
+    categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })),
+    transactions: [],
+    settings: { manualIncome: null, lastBackup: null },
+  }
+}
+
+/** Проверяет форму данных и приводит старые версии к текущей. Бросает ошибку, если данные не подходят. */
+function migrate(raw) {
+  if (!raw || typeof raw !== 'object') throw new Error('Файл не похож на копию «Финиша»')
+  if (typeof raw.version !== 'number') throw new Error('В файле нет номера версии')
+  if (raw.version > SCHEMA_VERSION) throw new Error('Копия сделана в более новой версии приложения')
+  for (const key of ['loans', 'prepayments', 'categories', 'transactions']) {
+    if (!Array.isArray(raw[key])) throw new Error('В копии повреждён раздел «' + key + '»')
+  }
+  for (const t of raw.transactions) {
+    if (!Number.isInteger(t.amount) || t.amount < 0 || typeof t.date !== 'string') throw new Error('В копии есть повреждённая операция')
+  }
+  return {
+    ...emptyState(),
+    ...raw,
+    settings: { ...emptyState().settings, ...(raw.settings || {}) },
+    version: SCHEMA_VERSION,
+  }
+}
+
+function loadState() {
+  try {
+    const text = localStorage.getItem(STORAGE_KEY)
+    if (!text) return emptyState()
+    return migrate(JSON.parse(text))
+  } catch (e) {
+    console.error('Не удалось прочитать данные', e)
+    return emptyState()
+  }
+}
+
+let state = loadState()
+
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    return true
+  } catch (e) {
+    console.error('Не удалось сохранить данные', e)
+    toast('Не удалось сохранить: в браузере закончилось место')
+    return false
+  }
+}
+
+/** Просим браузер не удалять данные при нехватке места. Safari может отказать — тогда спасает резервная копия. */
+let storagePersisted = false
+async function requestPersist() {
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      storagePersisted = (await navigator.storage.persisted()) || (await navigator.storage.persist())
+    }
+  } catch (e) { /* не поддерживается — не страшно */ }
+  renderSettings()
+}
+
+/* ===== Пример данных =====
+   Два кредита и три полных месяца плюс текущий. Суммы фиксированные, без случайностей,
+   чтобы пример всегда выглядел одинаково. В текущем месяце кафе специально выше обычного. */
+function annuity(balance, annualRate, months) {
+  const i = annualRate / 12 / 100
+  return i === 0 ? balance / months : (balance * i) / (1 - Math.pow(1 + i, -months))
+}
+
+function demoState() {
+  const s = emptyState()
+  const today = todayISO()
+
+  s.loans = [
+    { id: uid(), name: 'Ипотека', kind: 'mortgage', originalAmount: kop(6500000), balance: kop(5380000),
+      balanceDate: today, rate: 9.5, payment: kop(annuity(5380000, 9.5, 204)), payDay: 15 },
+    { id: uid(), name: 'Потребительский', kind: 'consumer', originalAmount: kop(800000), balance: kop(512000),
+      balanceDate: today, rate: 18.9, payment: kop(annuity(512000, 18.9, 30)), payDay: 5 },
+  ]
+
+  // [категория, день месяца, сумма в рублях]
+  const month = [
+    ['salary', 10, 80000], ['salary', 25, 70000],
+    ['home', 5, 9500], ['phone', 7, 1200],
+    ['subs', 3, 399], ['subs', 12, 299], ['subs', 20, 792],
+    ['food', 2, 7800], ['food', 9, 8400], ['food', 16, 7600], ['food', 23, 8900],
+    ['car', 6, 4500], ['car', 21, 4700],
+    ['kids', 8, 6500], ['kids', 18, 5600],
+    ['health', 14, 2900],
+    ['fun', 13, 3500], ['fun', 27, 2600],
+    ['cafe', 11, 2800], ['cafe', 24, 3100],
+  ]
+  // Небольшие отличия между месяцами: −3 → −1 месяц.
+  const factor = [1, 0.95, 1.07]
+  const now = new Date()
+  const tx = []
+  const add = (d, categoryId, rub, note) => {
+    const cat = DEFAULT_CATEGORIES.find((c) => c.id === categoryId)
+    tx.push({ id: uid(), type: cat.type, amount: kop(rub), categoryId, date: toISO(d), note: note || '' })
+  }
+  for (let back = 3; back >= 1; back--) {
+    const f = factor[3 - back]
+    for (const [cat, day, rub] of month) {
+      add(new Date(now.getFullYear(), now.getMonth() - back, day), cat, cat === 'salary' || cat === 'subs' ? rub : Math.round(rub * f))
+    }
+  }
+  // Разовые события: крупная покупка одежды и премия.
+  add(new Date(now.getFullYear(), now.getMonth() - 2, 17), 'clothes', 24000, 'Зимняя куртка')
+  add(new Date(now.getFullYear(), now.getMonth() - 1, 20), 'bonus', 100000, 'Квартальная премия')
+  // Текущий месяц — только прошедшие дни, кафе выше нормы.
+  for (const [cat, day, rub] of month) {
+    if (day <= now.getDate()) add(new Date(now.getFullYear(), now.getMonth(), day), cat, rub)
+  }
+  for (const day of [4, 15, 19]) {
+    if (day <= now.getDate()) add(new Date(now.getFullYear(), now.getMonth(), day), 'cafe', 1800)
+  }
+
+  s.transactions = tx.sort((a, b) => a.date.localeCompare(b.date))
+  return s
+}
+
+/* ===== Всплывающее сообщение ===== */
+let toastTimer
+function toast(text) {
+  const el = document.getElementById('toast')
+  el.textContent = text
+  el.classList.add('show')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600)
+}
+
+/* ===== Лист снизу ===== */
+let openSheetEl = null
+function openSheet(id) {
+  openSheetEl = document.getElementById(id)
+  openSheetEl.classList.add('open')
+  document.body.classList.add('sheet-open')
+  openSheetEl.scrollTop = 0
+}
+function closeSheet() {
+  if (!openSheetEl) return
+  openSheetEl.classList.remove('open')
+  document.body.classList.remove('sheet-open')
+  openSheetEl = null
+}
+document.addEventListener('click', (e) => { if (e.target.closest('[data-close-sheet]')) closeSheet() })
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet() })
+
+/* ===== Настройки и резервная копия ===== */
+function renderSettings() {
+  document.getElementById('st-loans').textContent = state.loans.length
+  document.getElementById('st-tx').textContent = state.transactions.length
+  document.getElementById('st-cats').textContent = state.categories.filter((c) => !c.hidden).length
+
+  document.getElementById('st-persist').textContent = storagePersisted
+    ? 'Данные хранятся только в этом браузере. Браузер не будет удалять их сам.'
+    : 'Данные хранятся только в этом браузере. Он может очистить их, если приложением долго не пользоваться, — сохраняйте копию.'
+
+  const last = state.settings.lastBackup
+  let text = 'Копия ещё не сохранялась.'
+  if (last) {
+    const days = daysBetween(last, todayISO())
+    text = days <= 0 ? 'Копия сохранена сегодня.'
+      : 'Копия сохранена ' + days + ' ' + plural(days, 'день', 'дня', 'дней') + ' назад.'
+  }
+  document.getElementById('st-backup').textContent = text
+}
+
+async function exportBackup() {
+  const name = 'finish-backup-' + todayISO() + '.json'
+  // Дату ставим до сериализации, чтобы после восстановления из этой копии она была верной.
+  const prevBackup = state.settings.lastBackup
+  state.settings.lastBackup = todayISO()
+  const json = JSON.stringify(state, null, 2)
+  const file = new File([json], name, { type: 'application/json' })
+
+  // На телефоне — через «Поделиться» (Файлы, iCloud, мессенджер). На компьютере — обычное скачивание.
+  const touch = matchMedia('(pointer: coarse)').matches
+  if (touch && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'Копия «Финиша»' })
+    } catch (e) {
+      state.settings.lastBackup = prevBackup
+      if (e.name === 'AbortError') return
+      throw e
+    }
+  } else {
+    const url = URL.createObjectURL(file)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = name
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+  save()
+  renderSettings()
+  toast('Копия сохранена')
+}
+
+async function importBackup(file) {
+  let next
+  try {
+    next = migrate(JSON.parse(await file.text()))
+  } catch (e) {
+    toast(e instanceof SyntaxError ? 'Это не файл копии' : e.message)
+    return
+  }
+  const summary = next.loans.length + ' ' + plural(next.loans.length, 'кредит', 'кредита', 'кредитов') + ', '
+    + next.transactions.length + ' ' + plural(next.transactions.length, 'операция', 'операции', 'операций')
+  if (!confirm('Заменить текущие данные копией?\n\nВ копии: ' + summary + '.')) return
+  state = next
+  save()
+  renderAll()
+  toast('Данные восстановлены')
+}
+
+document.getElementById('open-settings').addEventListener('click', () => {
+  renderSettings()
+  openSheet('sheet-settings')
+})
+document.getElementById('btn-export').addEventListener('click', () => {
+  exportBackup().catch((e) => { console.error(e); toast('Не удалось сохранить копию') })
+})
+document.getElementById('btn-import').addEventListener('click', () => document.getElementById('import-file').click())
+document.getElementById('import-file').addEventListener('change', (e) => {
+  const file = e.target.files[0]
+  e.target.value = ''
+  if (file) importBackup(file)
+})
+document.getElementById('btn-demo').addEventListener('click', () => {
+  const hasData = state.loans.length || state.transactions.length
+  if (hasData && !confirm('Заменить текущие данные примером?')) return
+  const lastBackup = state.settings.lastBackup
+  state = demoState()
+  state.settings.lastBackup = lastBackup
+  save()
+  renderAll()
+  toast('Пример загружен')
+})
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!confirm('Удалить все кредиты, операции и настройки?\n\nЭто нельзя отменить. Если нужна копия — сначала сохраните её.')) return
+  state = emptyState()
+  save()
+  renderAll()
+  toast('Все данные удалены')
+})
+
+/** Перерисовывает всё, что зависит от данных. Экраны будут добавляться сюда по этапам. */
+function renderAll() {
+  renderSettings()
+}
 
 /* ===== Навигация по вкладкам =====
    Текущая вкладка хранится в адресе (#home, #loans…), чтобы работала кнопка «назад»
@@ -254,6 +688,8 @@ document.querySelector('.tabbar').addEventListener('click', (e) => {
 
 window.addEventListener('hashchange', () => showTab(location.hash.slice(1)))
 showTab(location.hash.slice(1))
+renderAll()
+requestPersist()
 </script>
 </body>
 </html>
