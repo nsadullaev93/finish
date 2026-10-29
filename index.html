@@ -359,6 +359,34 @@ body.sheet-open { overflow: hidden; }
 .journal-row .top { display: flex; justify-content: space-between; gap: 8px; }
 .journal-row .caption { margin-top: 2px; }
 
+/* ===== Как пользоваться ===== */
+.help-intro { text-align: center; padding: 24px 20px; }
+.help-intro h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+.help-intro p { color: var(--label-2); font-size: 15px; }
+.help-steps { list-style: none; counter-reset: step; margin: 8px 0 16px; }
+.help-steps li {
+  counter-increment: step;
+  position: relative;
+  background: var(--card); border-radius: var(--radius);
+  padding: 14px 16px 14px 60px; margin-bottom: 8px;
+}
+.help-steps li::before {
+  content: counter(step);
+  position: absolute; left: 16px; top: 14px;
+  width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--accent); color: #fff;
+  font-size: 16px; font-weight: 700;
+}
+.help-steps b { display: block; font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+.help-steps p { font-size: 15px; color: var(--label-2); line-height: 1.4; }
+.help-steps p + p { margin-top: 6px; }
+.help-note p { font-size: 15px; line-height: 1.4; }
+.help-note p + p { margin-top: 8px; color: var(--label-2); }
+.btn-plain { display: block; width: 100%; min-height: 50px; margin-top: 8px; color: var(--accent); font-size: 17px; font-weight: 500; }
+.btn-plain:active { opacity: 0.5; }
+.link-btn { color: var(--accent); font-size: 15px; min-height: 44px; margin-top: 4px; }
+
 /* ===== Тесты ===== */
 .test-row { font-size: 15px; align-items: flex-start; }
 .test-row small { color: var(--red); font-size: 13px; }
@@ -371,12 +399,18 @@ body.sheet-open { overflow: hidden; }
 
   <!-- Главная -->
   <section class="screen" id="screen-home" aria-labelledby="t-home">
+    <div class="nav-bar">
+      <button class="icon-btn" data-open-help aria-label="Как пользоваться">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.2a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.2-2.5 3.9"/><path d="M12 17.2h.01"/></svg>
+      </button>
+    </div>
     <h1 class="large-title" id="t-home">Главная</h1>
     <div class="card empty" id="home-empty">
       <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg></div>
       <h2>Путь к финишу</h2>
       <p>Добавьте ипотеку — и здесь появится год, когда вы её закроете, и ваш прогресс.</p>
       <button class="btn-primary" data-add-loan>Добавить кредит</button>
+      <button class="link-btn" data-open-help>Как это работает?</button>
     </div>
     <div id="home-main"></div>
   </section>
@@ -477,6 +511,10 @@ body.sheet-open { overflow: hidden; }
     <button class="done" data-close-sheet>Готово</button>
   </div>
 
+  <div class="group" style="margin-top:8px">
+    <button class="row accent" data-open-help>Как пользоваться</button>
+  </div>
+
   <p class="card-title">Данные на этом устройстве</p>
   <div class="group">
     <div class="row"><span>Кредиты</span><span class="value" id="st-loans">0</span></div>
@@ -502,6 +540,53 @@ body.sheet-open { overflow: hidden; }
   <div class="group">
     <button class="row danger" id="btn-reset">Удалить все данные</button>
   </div>
+</div>
+
+<!-- Как пользоваться -->
+<div class="sheet" id="sheet-help" role="dialog" aria-modal="true" aria-labelledby="help-title">
+  <div class="sheet-head">
+    <span></span>
+    <h2 id="help-title">Как пользоваться</h2>
+    <button class="done" data-close-sheet>Готово</button>
+  </div>
+
+  <div class="card help-intro">
+    <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg></div>
+    <h2>Финиш поможет быстрее закрыть ипотеку</h2>
+    <p>Он показывает, когда вы выплатите долг, и считает, что будет, если платить чуть больше.</p>
+  </div>
+
+  <ol class="help-steps">
+    <li>
+      <b>Добавьте кредит</b>
+      <p>Откройте вкладку «Кредиты» и нажмите «+». Цифры возьмите из приложения банка: сколько брали, сколько осталось, под какой процент, сколько платите в месяц и какого числа.</p>
+    </li>
+    <li>
+      <b>Посмотрите «Главную»</b>
+      <p>Там крупно написано, в каком месяце и году вы закроете ипотеку. Кольцо показывает, какую часть долга вы уже выплатили.</p>
+    </li>
+    <li>
+      <b>Попробуйте «Сценарии»</b>
+      <p>Нажмите +5, +10 или +20 тысяч. Вы увидите, на сколько лет раньше закроете долг и сколько денег не отдадите банку.</p>
+      <p>«Уменьшить срок» обычно выгоднее, чем «Уменьшить платёж».</p>
+    </li>
+    <li>
+      <b>Внесли деньги досрочно — запишите</b>
+      <p>«Сценарии» → «Разово» → сумма → «Записать досрочку». Остаток и дата закрытия обновятся сами.</p>
+    </li>
+    <li>
+      <b>Сохраняйте копию раз в месяц</b>
+      <p>Все цифры хранятся только на этом телефоне. Чтобы их не потерять: «Деньги» → значок шестерёнки → «Сохранить копию в файл».</p>
+    </li>
+  </ol>
+
+  <div class="card help-note">
+    <p><b>Приложение только считает.</b> Решение всегда за вами.</p>
+    <p>Цифры примерные: банк может считать чуть иначе. Если остаток разошёлся с банком — откройте кредит и впишите точную цифру.</p>
+  </div>
+
+  <button class="btn-primary" data-close-sheet>Понятно</button>
+  <button class="btn-plain" id="help-demo">Сначала посмотреть на примере</button>
 </div>
 
 <!-- Кредит: добавление и правка -->
@@ -1718,6 +1803,35 @@ function renderTests() {
   return { passed, total: rows.length, failed: rows.filter((r) => !r.ok) }
 }
 
+/* ===== Как пользоваться =====
+   Показываем сами при первом запуске. Отметку «уже видел» храним отдельно от данных:
+   это удобство этого телефона, ему не место в резервной копии. */
+const HELP_SEEN_KEY = 'finish.helpSeen'
+
+function openHelp() {
+  closeSheet()
+  openSheet('sheet-help')
+  try { localStorage.setItem(HELP_SEEN_KEY, '1') } catch (e) { /* приватный режим — не страшно */ }
+}
+
+function helpSeen() {
+  try { return localStorage.getItem(HELP_SEEN_KEY) === '1' } catch (e) { return true }
+}
+
+document.addEventListener('click', (e) => { if (e.target.closest('[data-open-help]')) openHelp() })
+document.getElementById('help-demo').addEventListener('click', () => {
+  const hasData = state.loans.length || state.transactions.length
+  if (hasData && !confirm('Заменить ваши данные примером?')) return
+  const lastBackup = state.settings.lastBackup
+  state = demoState()
+  state.settings.lastBackup = lastBackup
+  save()
+  closeSheet()
+  renderAll()
+  location.hash = 'home'
+  toast('Это пример. Удалить его: «Деньги» → шестерёнка')
+})
+
 /** Перерисовывает всё, что зависит от данных. Экраны будут добавляться сюда по этапам. */
 function renderAll() {
   renderSettings()
@@ -1756,6 +1870,7 @@ window.addEventListener('hashchange', () => showTab(location.hash.slice(1)))
 showTab(location.hash.slice(1))
 renderAll()
 requestPersist()
+if (!helpSeen() && !state.loans.length && location.hash !== '#test') openHelp()
 </script>
 </body>
 </html>
